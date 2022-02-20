@@ -1,17 +1,5 @@
 <template>
-  <q-layout view="hHh lpR fFf" style="height: 100vh">
-    <q-header elevated>
-      <q-toolbar>
-        <q-toolbar-title class="text-h5 text-weight-bolder"
-          >Chromatic Tuner</q-toolbar-title
-        >
-        <q-space />
-
-        <q-btn label="Back" color="accent" icon="close" to="/tools" />
-      </q-toolbar>
-    </q-header>
-    <q-page-container>
-      <div class="q-mt-xl">
+      <div class="">
         <canvas class="frequency-bars"></canvas>
         <div class="meter">
           <div class="meter-dot"></div>
@@ -19,19 +7,43 @@
         </div>
         <div class="notes">
           <div class="notes-list"></div>
-          <div class="frequency"><span>Hz</span></div>
+          <div class="frequency" @click="getFreq"><span>Hz</span></div>
         </div>
-        <div class="a4">A<sub>4</sub> = <span>440</span> Hz</div>
+        <div class="a4" >A<sub>4</sub> = <span>440</span> Hz</div>
       </div>
-    </q-page-container>
-  </q-layout>
 </template>
 <script>
-
-
-// import { Application } from "../../middleware/tools/tuner.js"
 import swal from 'sweetalert2/dist/sweetalert2.js'
 import aubio from "aubiojs"
+
+
+export default {
+  mounted(){
+    const app = new Application();
+    app.start()
+  },
+  methods: {
+    getFreQ(){
+      $q.dialog({
+        title: 'Prompt',
+        message: 'What is your name?',
+        prompt: {
+          model: '',
+          type: 'number' // optional
+        },
+        cancel: true,
+        persistent: true
+      }).onOk(data => {
+        // console.log('>>>> OK, received', data)
+      }).onCancel(() => {
+        // console.log('>>>> Cancel')
+      }).onDismiss(() => {
+        // console.log('I am triggered on both OK and Cancel')
+      })
+   
+    }
+  }
+}
 export const Tuner = function ( a4 ) {
   this.middleA = a4 || 440
   this.semitone = 69
@@ -118,7 +130,7 @@ Tuner.prototype.startRecord = function () {
 }
 
 Tuner.prototype.init = function() {
-  this.audioContext = new window.AudioContext()
+  this.audioContext =  new(window.AudioContext || window.webkitAudioContext)();
   this.analyser = this.audioContext.createAnalyser()
   this.scriptProcessor = this.audioContext.createScriptProcessor(
     this.bufferSize,
@@ -409,17 +421,9 @@ Application.prototype.toggleAutoMode = function() {
   this.notes.toggleAutoMode()
 }
 
-export default {
-  mounted(){
-
-    const app = new Application();
-    app.start()
-  }
-}
 </script>
 
 <style>
-@import "*sweetalert2/src/sweetalert2.scss";
 html {
   height: 100%;
 }
