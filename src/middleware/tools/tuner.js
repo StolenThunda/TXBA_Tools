@@ -230,7 +230,7 @@ Notes.prototype.clearActive = function() {
   }
 }
 
-Notes.prototype.update = function(note) {
+Notes.prototype.update = function ( note ) {
   if (note.value in this.$notesMap) {
     this.active(this.$notesMap[note.value])
     this.$frequency.childNodes[0].textContent = parseFloat(
@@ -291,12 +291,13 @@ export const FrequencyBars = function(selector) {
 /**
  * @param {Uint8Array} data
  */
-FrequencyBars.prototype.update = function(data) {
+FrequencyBars.prototype.update = function ( data ) {
+  console.log("barsUpdated")
   const length = 64 // low frequency only
   const width = this.$canvas.width / length - 0.5
   this.canvasContext.clearRect(0, 0, this.$canvas.width, this.$canvas.height)
   for (var i = 0; i < length; i += 1) {
-    this.canvasContext.fillStyle = '#ecf0f1'
+    this.canvasContext.fillStyle = '#ef6c00'
     this.canvasContext.fillRect(
       i * (width + 0.5),
       this.$canvas.height - data[i],
@@ -307,18 +308,11 @@ FrequencyBars.prototype.update = function(data) {
 }
 
 export const Application = function () {
-  this.initA4()
   this.tuner = new Tuner(this.a4)
   this.notes = new Notes('.notes', this.tuner)
   this.meter = new Meter('.meter')
   this.frequencyBars = new FrequencyBars('.frequency-bars')
   this.update({ name: 'A', frequency: this.a4, octave: 4, value: 69, cents: 0 })
-}
-
-Application.prototype.initA4 = function () {
-  this.$a4 = document.querySelector('.a4 span')
-  this.a4 = parseInt(localStorage.getItem('a4')) || 440
-  this.$a4.innerHTML = this.a4
 }
 
 Application.prototype.start = function() {
@@ -334,32 +328,11 @@ Application.prototype.start = function() {
     }
   }
 
-  swal.fire('Welcome online tuner!').then(function() {
-    self.tuner.init()
-    self.frequencyData = new Uint8Array(self.tuner.analyser.frequencyBinCount)
-  })
-
-  this.$a4.addEventListener('click', function () {
-    swal.fire({
-      input: 'number',
-      inputValue: self.a4,
-    }).then(function ({ value: a4 }) {
-      if (!parseInt(a4) || a4 === self.a4) {
-        return
-      }
-      self.a4 = a4
-      self.$a4.innerHTML = a4
-      self.tuner.middleA = a4
-      self.notes.createNotes()
-      self.update({ name: 'A', frequency: self.a4, octave: 4, value: 69, cents: 0 })
-      localStorage.setItem('a4', a4)
-    })
-  })
-
   this.updateFrequencyBars()
 }
 
-Application.prototype.updateFrequencyBars = function() {
+Application.prototype.updateFrequencyBars = function () {
+  console.log("updateFrequencyBars")
   if (this.tuner.analyser) {
     this.tuner.analyser.getByteFrequencyData(this.frequencyData)
     this.frequencyBars.update(this.frequencyData)
