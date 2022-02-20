@@ -1,6 +1,6 @@
 <template>
   <!--q-layout view="hHh lpR fFf">  <q-layout view="hHh Lpr lff"> -->
-     <q-layout view="lHh Lpr lff" container style="height: 100vh" class="shadow-2 rounded-borders">
+     <q-layout view="lHh Lpr lff" class="shadow-2 rounded-borders">
     <q-header elevated reveal>
       <q-toolbar >
         <q-btn
@@ -9,12 +9,11 @@
         aria-label="menu"
         @click="retrieveDrawer = !retrieveDrawer"
       />
-      <q-space />
-        <q-toolbar-title class="text-capitalize text-subtitle2">
+        <q-toolbar-title class="text-capitalize text-h3 text-center">
           {{ $route.meta.name || 'TXBA TOOLS'}}
         </q-toolbar-title>
         
-        <q-btn label="Back" color="accent" icon="close" to="/tools" />
+        <q-btn label="Back" color="accent" icon="close" to="/" />
       </q-toolbar>
     </q-header>
 

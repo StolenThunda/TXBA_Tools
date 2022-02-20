@@ -1,7 +1,0 @@
-{
-  "appId": "org.capacitor.quasar.app",
-  "appName": "ProPlayer v8 by Quaser ",
-  "bundledWebRuntime": false,
-  "npmClient": "yarn",
-  "webDir": "www"
-}

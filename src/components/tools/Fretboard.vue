@@ -37,14 +37,7 @@
           </template>
         </q-select>
         <q-space></q-space>
-        <q-btn
-          label="Close"
-          color="secondary"
-          icon="close"
-          to="/"
-          flat
-          dense
-        />
+        <q-btn label="Back" color="accent" icon="close" to="/" />
       </q-toolbar>
     </q-header>
 
