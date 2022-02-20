@@ -1,6 +1,6 @@
-# Quaser ProPlayer v8 (quasar-pp8)
+# TXBA Tools (txba_tools)
 
-A quasar version of Proplayer. one codebase for all!
+A quasar version of Proplayer's toolset. one codebase for all!
 
 ## Install the dependencies
 ```bash
@@ -30,11 +30,4 @@ See [Configuring quasar.conf.js](https://quasar.dev/quasar-cli/quasar-conf-js).
 ## TODO
 ### General
 [ ] Tool List functions
-
-### Browser Section
-[ ] Add KeyboardEvents
-
-### Watch Section
-[ ] Add KeyboardEvents# PP8_SPA
-# PP8_SPA
-# PP8_SPA
++

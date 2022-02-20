@@ -230,7 +230,7 @@ Notes.prototype.clearActive = function() {
   }
 }
 
-Notes.prototype.update = function(note) {
+Notes.prototype.update = function ( note ) {
   if (note.value in this.$notesMap) {
     this.active(this.$notesMap[note.value])
     this.$frequency.childNodes[0].textContent = parseFloat(
@@ -307,7 +307,7 @@ FrequencyBars.prototype.update = function(data) {
 }
 
 export const Application = function () {
-  this.initA4()
+  // this.initA4()
   this.tuner = new Tuner(this.a4)
   this.notes = new Notes('.notes', this.tuner)
   this.meter = new Meter('.meter')
@@ -334,27 +334,27 @@ Application.prototype.start = function() {
     }
   }
 
-  swal.fire('Welcome online tuner!').then(function() {
-    self.tuner.init()
-    self.frequencyData = new Uint8Array(self.tuner.analyser.frequencyBinCount)
-  })
+  // swal.fire('Welcome online tuner!').then(function() {
+  //   self.tuner.init()
+  //   self.frequencyData = new Uint8Array(self.tuner.analyser.frequencyBinCount)
+  // })
 
-  this.$a4.addEventListener('click', function () {
-    swal.fire({
-      input: 'number',
-      inputValue: self.a4,
-    }).then(function ({ value: a4 }) {
-      if (!parseInt(a4) || a4 === self.a4) {
-        return
-      }
-      self.a4 = a4
-      self.$a4.innerHTML = a4
-      self.tuner.middleA = a4
-      self.notes.createNotes()
-      self.update({ name: 'A', frequency: self.a4, octave: 4, value: 69, cents: 0 })
-      localStorage.setItem('a4', a4)
-    })
-  })
+  // this.$a4.addEventListener('click', function () {
+  //   swal.fire({
+  //     input: 'number',
+  //     inputValue: self.a4,
+  //   }).then(function ({ value: a4 }) {
+  //     if (!parseInt(a4) || a4 === self.a4) {
+  //       return
+  //     }
+  //     self.a4 = a4
+  //     self.$a4.innerHTML = a4
+  //     self.tuner.middleA = a4
+  //     self.notes.createNotes()
+  //     self.update({ name: 'A', frequency: self.a4, octave: 4, value: 69, cents: 0 })
+  //     localStorage.setItem('a4', a4)
+  //   })
+  // })
 
   this.updateFrequencyBars()
 }

@@ -3,12 +3,12 @@
      <q-layout view="lHh Lpr lff" class="shadow-2 rounded-borders">
     <q-header elevated reveal>
       <q-toolbar >
-        <q-btn
+        <!-- <q-btn
         color="accent"
         icon="menu"
         aria-label="menu"
         @click="retrieveDrawer = !retrieveDrawer"
-      />
+      /> -->
         <q-toolbar-title class="text-capitalize text-h3 text-center">
           {{ $route.meta.name || 'TXBA TOOLS'}}
         </q-toolbar-title>
