@@ -1,4 +1,4 @@
-<template>
+l<template>
   <form @submit.prevent="submitForm" @keyup.enter="submitForm">
     <div class="row q-mb-md">
       <q-banner >
@@ -21,7 +21,13 @@
         class="col"
         label="Email"
         stack-label
-      />
+      >
+      <template v-slot:prepend>
+          <q-icon 
+            name="email"
+          />
+        </template>
+      </q-input>
     </div>
     <div class="row q-mb-md">
       <q-input
@@ -30,13 +36,20 @@
         outlined
         stack-label
         v-model="formData.password"
-        type="password"
+        :type="passwordVisible ? 'text' : 'password'"
         label="Password"
         :rules="[
           val => val.length >= 6 || 'Please enter at least six characters'
         ]"
         lazy-rules
-      />
+      >
+      <template v-slot:prepend>
+          <q-icon 
+            :name="passwordVisible ? 'visibility_off' : 'visibility'" 
+            @click="passwordVisible = !passwordVisible"
+          />
+        </template>
+      </q-input>
     </div>
     <div class="row">
       <q-btn label="Cancel" icon="close" color="primary" v-close-popup />
@@ -51,6 +64,7 @@ import { mapActions } from "vuex";
 export default {
   props: ['tab'],
   data: () => ({
+    passwordVisible: false,
     formData: {
       email: "",
       password: ""

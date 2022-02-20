@@ -140,6 +140,13 @@ export default {
     }
   },
   getters: {
+    getRequest( { state, commit, rootState, rootGetters } ) {
+      // console.dir( state )
+      // console.dir( commit )
+      // console.dir( rootState )
+      // console.dir( rootGetters )
+      return state
+    },
     getFavsByType: state => {
       let collector = {};
       state.favorites.forEach(el => {

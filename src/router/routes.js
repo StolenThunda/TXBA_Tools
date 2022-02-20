@@ -3,50 +3,57 @@ const routes = [
     path: "/auth",
     component: () => import("src/pages/AuthPage.vue")
   },
+  // {
+  //   path: "/",
+  //   component: () => import("layouts/MainLayout.vue"),
+  //   children: [{ path: "", component: () => import("pages/Index.vue") }]
+  // },
   {
     path: "/",
-    component: () => import("layouts/MainLayout.vue"),
-    children: [{ path: "", component: () => import("pages/Index.vue") }]
-  },
-  {
-    path: "/tools",
-    component: () => import("layouts/Browser.vue"),
+    component: () => import("src/layouts/Tools.vue"),
     // beforeEnter: authGuard,
     children: [
       {
+        path: "",
+        component: () => import("pages/Tools")
+      },
+      {
         name: "external",
-        path: "/ex/:dest",
+        path: "/tools/ex/:dest",
         beforeEnter() {
           location.href = `https://texasbluesalley.com/${dest}`;
         }
       },
       {
         name: "browser",
-        path: "/browser",
+        path: "/tools/browser",
         component: () => import("pages/Browser")
       },
       {
         name: "tuner",
-        path: "/tuner",
-        component: () => import("pages/Tools"),
+        path: "/tools/tuner",
+        component: () => import("components/tools/Tuner"),
         meta: {
-          src: "/dev/tuner"
+          src: "/dev/tuner",
+          name: "Tuner"
         }
       },
       {
         name: "spider",
-        path: "/spider",
-        component: () => import("pages/Tools"),
+        path: "/tools/spider",
+        component: () => import("components/tools/Spider"),
         meta: {
-          src: "/dev/spider"
+          src: "/dev/spider",
+          name: "Spider Drills"
         }
       },
       {
         name: "fretboard",
-        path: "/fretboard",
-        component: () => import("pages/Tools"),
+        path: "/tools/fretboard",
+        component: () => import("components/tools/Fretboard"),
         meta: {
-          src: "/dev/fretboard"
+          src: "/dev/fretboard",
+          name: "Fretboard"
         }
       }
     ]

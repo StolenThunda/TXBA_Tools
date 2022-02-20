@@ -49,14 +49,7 @@
         </q-fab>
         <q-btn size="25px" to="/browser" icon="mdi-magnify" flat />
       </slot>
-      <q-btn
-        class="q-pa-xs"
-        round
-        flat
-        icon="mdi-arrow-expand-all"
-        v-if="fullScreenEnabled"
-        @click="toggleFullScreen"
-      />
+      
       <slot name="auth"></slot>
     </q-toolbar>
     <course-info v-show="visible" @closeInfo="toggleInfo" />

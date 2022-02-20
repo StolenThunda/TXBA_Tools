@@ -1,18 +1,19 @@
 <template>
   <q-layout
     view="hHh Lpr lff"
-    container
-    style="height: 100vh"
-    class="shadow-2 rounded-borders"
   >
-    <q-header elevated>
+    <!-- container -->
+    <!-- <q-footer elevated>
+    style="height: 100vh"
+    class="shadow-2 absolute-center rounded-borders"
       <q-toolbar class="q-electron-drag">
         <q-btn
           rounded
+          icon="key"
+          label="Enter"
           color="grey-4"
           text-color="secondary"
           class="q-electron-drag--exception"
-          label="Click Here to Enter"
           @click="card = !card"
         />
 
@@ -22,7 +23,7 @@
         </q-toolbar-title>
 
 
-        <q-dialog v-model="card">
+      <q-dialog v-model="card">
           <q-card class="auth-tabs">
             <q-tabs
               v-model="tab"
@@ -51,7 +52,7 @@
           </q-card>
         </q-dialog>
       </q-toolbar>
-    </q-header>
+    </q-footer> -->
 
     <q-page-container>      
       <hero-carousel />
@@ -61,12 +62,12 @@
 
 <script>
 import { mapState } from "vuex";
-import LoginRegister from "src/components/auth/LoginRegister.vue";
+// import LoginRegister from "src/components/auth/LoginRegister.vue";
 import HeroCarousel from 'src/components/auth/HeroCarousel.vue';
 export default {
   name: "AuthPage",
   components: {
-    LoginRegister,
+    // LoginRegister,
     HeroCarousel
   },
   data: () => ({

@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../txba-demo"
+		}
+	],
+	"settings": {
+		"vetur.validation.template": false,
+		"vetur.format.enable": false,
+		"vetur.experimental.templateInterpolationService": true
+	}
+}

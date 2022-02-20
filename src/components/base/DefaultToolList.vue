@@ -50,7 +50,7 @@ export default {
           {
             title: "Spider Drills",
             icon: "mdi-spider-web",
-            internal: 'blah'
+            internal: '/tools/spider'
           },
           {
             title: "Fretboard Tool",

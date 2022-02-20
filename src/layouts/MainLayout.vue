@@ -1,12 +1,11 @@
 <template>
   <q-layout
     view="hHh Lpr lff"
-    container
-    style="height: 100vh"
+    style="padding-top: env(safe-area-inset-top)"
     class="shadow-2 rounded-borders"
   >
     <!-- <q-layout view="lHh Lpr lff"> -->
-    <q-header elevated>
+    <q-footer elevated>
       <q-toolbar class="q-electron-drag">
         <drawer-toggle
           v-if="loggedIn"
@@ -18,7 +17,7 @@
           rounded
           color="grey-4"
           text-color="secondary"
-          class="q-electron-drag--exception"
+          class="absolute-center q-electron-drag--exception"
           label="Click Here to Enter"
           @click="card = !card"
         />
@@ -68,7 +67,7 @@
           </q-card>
         </q-dialog>
       </q-toolbar>
-    </q-header>
+    </q-footer>
 
     <q-drawer
       v-if="loggedIn"
@@ -109,6 +108,11 @@ export default {
     tab: "login",
     card: false
   }),
+  mounted() {
+    this.$refs.carousel.on('click', () => {
+      this.card = !this.card;
+    });
+  },
   computed: {
     ...mapState("auth", ["loggedIn"]),
     ...mapState("default", { tabs: state => state.sidebarTabs }),

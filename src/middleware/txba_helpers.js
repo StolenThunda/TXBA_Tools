@@ -34,16 +34,20 @@ export default class TXBA_Utilities {
     this.favs = [];
   }
 
-  async getAsyncData(slug, callback) {
-    const url = `${this.baseURL}${slug}`;
-    return await axios
-      .get(url)
-      .then(async response => await response.data)
-      .then(data => (callback ? callback.call(this, data) : data))
-      .catch(err => {
-        // console.log(err);
-        return err;
-      });
+  async getAsyncData ( slug, callback, useBase = true ) {
+    if ( slug ) {
+      console.log(slug, callback?.name, useBase)
+      const url = `${useBase ? this.baseURL : ''}${slug}`;
+      return await axios
+        .get( url )
+        .then( async response => await response.data )
+        .then( data => ( callback ? callback.call( this, data ) : data ) )
+        .catch( err => {
+          // console.log(err);
+          return err;
+        } );
+    }
+    return null
   }
 
   async postAsyncData(params) {
@@ -63,7 +67,7 @@ export default class TXBA_Utilities {
       });
   }
   async getFavs(id) {
-    let url = this.favorites_slug + "/" + id ? id : "";
+    let url = `${this.favorites_slug}/${id ? id : ""}`
     return this.getAsyncData(url, this.parseFavoriteHtml);
   }
 

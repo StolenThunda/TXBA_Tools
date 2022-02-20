@@ -6,20 +6,16 @@
   "author": "Tony Moses <tonym415@gmail.com>",
   "private": true,
   "scripts": {
-    "dev": "export NODE_OPTIONS=--openssl-legacy-provider && npx quasar d",
+    "build": "npx quasar b --debug",
+    "build:deploy": "yarn run build && yarn run propogate",
+    "build:electron": "npx quasar build -m capacitor -T android --scan --ide",
+    "build:ios": "npx quasar build -m capacitor -T ios --debug --ide",
+    "dev": " npx quasar d",
     "dev:electron": "unset NODE_OPTIONS && npx quasar dev -m electron -- --no-sandbox --disable-setuid-sandbox",
-    "build_deploy": "quasar build && ../deployProjects.sh",
+    "dev:ios": "npx quasar dev -m capacitor -T ios --ide",
     "lint": "eslint --ext .js,.vue ./",
-    "test": "npx jest",
-    "debug": "export NODE_OPTIONS=--openssl-legacy-provider && quasar build --debug",
-    "test:unit": "npx jest --updateSnapshot",
-    "test:unit:ci": "npx jest --ci",
-    "test:unit:coverage": "npx jest --coverage",
-    "test:unit:watch": "npx jest --watch",
-    "test:unit:watchAll": "npx jest --watchAll",
-    "serve:test:coverage": "npx quasar serve test/jest/coverage/lcov-report/ --port 8788",
-    "concurrently:dev:jest": "npx concurrently \"quasar dev\" \"jest --watch\"",
-    "test:unit:ui": "npx majestic"
+    "propogate": "cp --update --recursive --verbose --force dist/spa/* ../txba-demo",
+    "start": "quasar d"
   },
   "dependencies": {
     "@capacitor/android": "^2.4.1",
@@ -27,16 +23,22 @@
     "@quasar/cli": "^1.2.2",
     "@quasar/extras": "^1.12.4",
     "@quasar/icongenie": "^2.4.2",
+    "@svgdotjs/svg.filter.js": "^3.0.8",
+    "@svgdotjs/svg.js": "^3.1.2",
+    "@svgdotjs/svg.panzoom.js": "^2.1.2",
+    "aubiojs": "^0.0.1",
     "axios": "^0.21.1",
     "cheerio": "^1.0.0-rc.3",
     "cordova": "^10.0.0",
     "core-js": "^3.6.5",
+    "fastclick": "^1.0.6",
     "firebase": "^8.2.6",
     "global": "^4.4.0",
-    "jest": "^27.1.0",
     "quasar": "^1.18.2",
+    "sweetalert2": "^11.4.0",
     "vue-plyr": "^6.0.4",
-    "webpack": "^5.20.2"
+    "webpack": "^5.20.2",
+    "x-frame-bypass": "^1.0.2"
   },
   "devDependencies": {
     "@quasar/app": "^2.2.1",
@@ -50,9 +52,7 @@
     "eslint-config-prettier": "^6.9.0",
     "eslint-loader": "^3.0.3",
     "eslint-plugin-jest": "^24.1.0",
-    "eslint-plugin-vue": "^6.1.2",
-    "majestic": "^1.2.24",
-    "wallaby-vue-compiler": "^1.0.3"
+    "eslint-plugin-vue": "^6.1.2"
   },
   "browserslist": [
     "last 10 Chrome versions",

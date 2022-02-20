@@ -10,8 +10,7 @@
       <div class="row q-pa-lg no-wrap ">
         <div class="column ">
           <div class="text-h6 q-mb-md">Settings</div>
-          <!-- <q-btn icon="mdi-account-details" label="Account" to="/profile" /> -->
-          <tool-list />
+          <default-tool-list />
         </div>
 
         <q-separator vertical inset class="q-mx-lg" />
@@ -41,7 +40,7 @@ import { mapActions, mapState } from "vuex";
 export default {
   name: "AuthButton",
   components: {
-    ToolList: () => require("components/base/DefaultToolList").default
+    DefaultToolList: () => import("components/base/DefaultToolList")
   },
   computed: {
     ...mapState("auth", ["loggedIn"]),

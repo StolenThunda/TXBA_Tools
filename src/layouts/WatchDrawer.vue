@@ -142,7 +142,7 @@ export default {
           ),
         menu: () =>
           import(
-            /* webpackChunkName: "watch-sidebar", webpackMode: "lazy" */ "components/watch/settings/playerSettings"
+            /* webpackChunkName: "watch-sidebar", webpackMode: "lazy" */ "components/watch/settings/PlayerSettings"
           )
       },
       {
