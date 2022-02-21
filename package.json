@@ -34,11 +34,10 @@
     "fastclick": "^1.0.6",
     "firebase": "^8.2.6",
     "global": "^4.4.0",
+    "howler": "^2.2.3",
     "quasar": "^1.18.2",
-    "sweetalert2": "^11.4.0",
     "vue-plyr": "^6.0.4",
-    "webpack": "^5.20.2",
-    "x-frame-bypass": "^1.0.2"
+    "webpack": "^5.20.2"
   },
   "devDependencies": {
     "@quasar/app": "^2.2.1",

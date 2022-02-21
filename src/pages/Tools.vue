@@ -29,9 +29,9 @@ export default {
       },
       {
         to: "/tools/spider",
-        title: "Under Construction",
-        disable: true,
-        glossy: false,
+        // title: "Under Construction",
+        // disable: true,
+        // glossy: false,
         icon: "bug_report",
         label: "Spider Tool",
       },
