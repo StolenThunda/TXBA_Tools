@@ -7,17 +7,26 @@
     </div>
     <div class="notes">
       <div class="notes-list"></div>
-      <div class="frequency text-h2"><span></span>Hz</div>
+      <div class="frequency text-h5"><span></span>Hz</div>
       <div>
-        <q-btn
+        <!-- <q-btn
           class="q-ma-xl"
           color="accent"
           @click="getFreq"
           label="Change Frequency"
-        />
-        <q-btn icon="graphic_eq" size="xl" flat disable>
+        /> -->
+       <q-btn
+        class="q-ma-xl"
+          color="accent"
+          @click="getFreq"
+          icon="graphic_eq"
+          stacked 
+          push
+          glossy
+          rounded
+          >
           <div class="text-h4">
-            A<sub>4</sub>=<span class="text-accent">{{ app?.a4 }} </span>
+            A<sub>4</sub>=<span>{{ getA4 }} </span>
             Hz
           </div>
         </q-btn>
@@ -35,18 +44,12 @@ export default {
   }),
   computed: {
     getA4() {
-      return this.app?.tuner?.middleA || "440";
+      return this.app?.a4 || "440";
     },
   },
   mounted() {
-    this.app = new Application();
+    this.app =  new Application()
     this.app.start();
-
-    this.app.tuner.init();
-    this.app.frequencyData = new Uint8Array(
-      this.app.tuner.analyser.frequenyBinCount
-    );
-    console.dir(this.app);
   },
   methods: {
     setFreq(freq) {

@@ -86,7 +86,7 @@ Tuner.prototype.startRecord = function () {
 }
 
 Tuner.prototype.init = function() {
-  this.audioContext = new window.AudioContext()
+  this.audioContext = new  (window.AudioContext || window.webkitAudioContext)
   this.analyser = this.audioContext.createAnalyser()
   this.scriptProcessor = this.audioContext.createScriptProcessor(
     this.bufferSize,
@@ -292,10 +292,10 @@ export const FrequencyBars = function(selector) {
  * @param {Uint8Array} data
  */
 FrequencyBars.prototype.update = function ( data ) {
-  console.log("barsUpdated")
   const length = 64 // low frequency only
   const width = this.$canvas.width / length - 0.5
-  this.canvasContext.clearRect(0, 0, this.$canvas.width, this.$canvas.height)
+  this.canvasContext.clearRect( 0, 0, this.$canvas.width, this.$canvas.height )
+  this.canvasContext.globalAlpha = 0.35;
   for (var i = 0; i < length; i += 1) {
     this.canvasContext.fillStyle = '#ef6c00'
     this.canvasContext.fillRect(
@@ -308,6 +308,7 @@ FrequencyBars.prototype.update = function ( data ) {
 }
 
 export const Application = function () {
+  this.a4 = parseInt(localStorage.getItem('a4')) || 440
   this.tuner = new Tuner(this.a4)
   this.notes = new Notes('.notes', this.tuner)
   this.meter = new Meter('.meter')
@@ -329,10 +330,11 @@ Application.prototype.start = function() {
   }
 
   this.updateFrequencyBars()
+  this.tuner.init()
+  this.frequencyData = new Uint8Array(self.tuner.analyser.frequencyBinCount)
 }
 
 Application.prototype.updateFrequencyBars = function () {
-  console.log("updateFrequencyBars")
   if (this.tuner.analyser) {
     this.tuner.analyser.getByteFrequencyData(this.frequencyData)
     this.frequencyBars.update(this.frequencyData)
