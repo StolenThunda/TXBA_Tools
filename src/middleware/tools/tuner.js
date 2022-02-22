@@ -1,4 +1,3 @@
-import swal from 'sweetalert2/dist/sweetalert2.js'
 import aubio from "aubiojs"
 export const Tuner = function ( a4 ) {
   this.middleA = a4 || 440

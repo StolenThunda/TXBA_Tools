@@ -23,7 +23,7 @@ module.exports = function (/* ctx */ ) {
       'firebase',
       'axios',
       // 'panzoom',
-      'vue-plyr'
+      // 'vue-plyr'
     ],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css

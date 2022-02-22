@@ -6,7 +6,7 @@
     <q-header
       elevated
     >
-    <q-toolbar>
+    <q-toolbar class="q-electron-drag">
 
         <q-toolbar-title class="text-h5 text-weight-bolder">Fretboard Tool</q-toolbar-title>
     </q-toolbar>
