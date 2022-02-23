@@ -28,13 +28,11 @@ function createWindow () {
     useContentSize: true,
   // frame: false,
     webPreferences: {
-      // Change from /quasar.conf.js > electron > nodeIntegration;
-      // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
-      nodeIntegration: process.env.QUASAR_NODE_INTEGRATION,
-      nodeIntegrationInWorker: process.env.QUASAR_NODE_INTEGRATION,
-
-      // More info: /quasar-cli/developing-electron-apps/electron-preload-script
-      // preload: path.resolve(__dirname, 'electron-preload.js')
+      /// we enable contextIsolation (Electron 12+ has it enabled by default anyway)
+    contextIsolation: true,
+    // we use a new way to reference the preload script
+    // (it's going to be needed, so add it and create the file if it's not there already)
+    preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD)
     }
   })
   // enable(mainWindow.webContents) 

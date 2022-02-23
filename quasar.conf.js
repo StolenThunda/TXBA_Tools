@@ -88,7 +88,7 @@ module.exports = function (/* ctx */ ) {
       },
       open: true, // opens browser window automatically
       headers: {
-        'Access-Control-Allow-Origin' : "*",
+        'Access-Control-Allow-Origin': "*",
         // 'X-Frame-Options': 'DENY',
         'X-Frame-Options': 'SAMEORIGIN',
         // 'X-Frame-Options': 'ALLOW-FROM *'
@@ -211,18 +211,28 @@ module.exports = function (/* ctx */ ) {
         // win32metadata: { ... }
       },
 
+
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'quasar-pp8'
+        appId: 'com.electron.txbatools.app'
       },
 
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
       nodeIntegration: true,
-
-      extendWebpack (/* cfg */ ) {
+      chainWebpackMain ( chain ) {
+        // example for its content (adds linting)
+        chain.plugin( 'eslint-webpack-plugin' )
+          .use( ESLintPlugin, [{ extensions: ['js'] }] )
+      },
+      extendWebpackMain ( cfg ) {
         // do something with Electron main process Webpack cfg
         // chainWebpack also available besides this extendWebpack
+      },
+      chainWebpackPreload ( chain ) {
+        // example (adds linting)
+        chain.plugin( 'eslint-webpack-plugin' )
+          .use( ESLintPlugin, [{ extensions: ['js'] }] )
       }
     }
   }
