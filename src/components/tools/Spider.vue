@@ -184,11 +184,11 @@ export default {
 		 var FastClick = require("fastclick");
     FastClick.attach(document.body, {});
 
-			tickSound = new Howl({
+			this.tickSound = new Howl({
 			  src: ['/assets/audio/tick-sound.mp3']
 			});
 			
-			tockSound = new Howl({
+			this.tockSound = new Howl({
 			  src: ['/assets/audio/tock-sound.mp3']
 			});
 
