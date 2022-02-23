@@ -31,6 +31,7 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
+releases/*
 releases/quasar-pp8-linux-ia32/blink_image_resources_200_percent.pak
 releases/quasar-pp8-linux-ia32/content_resources_200_percent.pak
 releases/quasar-pp8-linux-ia32/content_shell.pak
