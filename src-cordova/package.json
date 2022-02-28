@@ -15,7 +15,9 @@
   "devDependencies": {
     "cordova-android": "^10.1.1",
     "cordova-ios": "^6.2.0",
-    "cordova-plugin-ionic-webview": "^5.0.0"
+    "cordova-plugin-audioinput": "^1.0.2",
+    "cordova-plugin-ionic-webview": "^5.0.0",
+    "cordova-plugin-splashscreen": "^6.0.0"
   },
   "cordova": {
     "platforms": [
@@ -23,7 +25,8 @@
       "ios"
     ],
     "plugins": {
-      "cordova-plugin-ionic-webview": {}
+      "cordova-plugin-ionic-webview": {},
+      "cordova-plugin-audioinput": {}
     }
   }
 }
