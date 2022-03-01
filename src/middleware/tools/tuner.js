@@ -1,10 +1,12 @@
 import aubio from "aubiojs";
 import { consoleMessage, getMicrophonePermission } from "./tunerLib.js";
 
+
+export var DEBUG_INFO = null;
 const ConsoleMessage = ( ...message ) => {
   // console.trace( message );
+  DEBUG_INFO += `<br /><br /> ${ message}`;
   consoleMessage(message);
-  Application.info += message;
 };
 
 const onAudioInput = (evt) => {
@@ -121,7 +123,7 @@ Tuner.prototype.setup = function (stream) {
   const self = this;
   ConsoleMessage("setup");
   self.audioContext = self.getAudioContext();
-  // if (!stream) stream = window.audioinput.getStream();
+  if (!stream) stream = window.audioinput.getStream();
   ConsoleMessage(`stream: ${stream}`);
   self.audioContext.createMediaStreamSource(stream).connect(self.analyser);
   self.analyser.connect(self.scriptProcessor);
@@ -208,17 +210,19 @@ Tuner.prototype.getCents = function (frequency, note) {
 Tuner.prototype.play = function (frequency) {
   this.audioContext = this.getAudioContext();
   ConsoleMessage(`audioContext: ${this.audioContext}`);
-  if (!self.oscillator) {
-    self.oscillator = this.audioContext.createOscillator();
-    self.oscillator.connect(this.audioContext.destination);
-    self.oscillator.start();
+  if (!this.oscillator) {
+    this.oscillator = this.audioContext.createOscillator();
+    this.oscillator.connect(this.audioContext.destination);
+    this.oscillator.start();
   }
-  self.oscillator.frequency.value = frequency;
+  this.oscillator.frequency.value = frequency;
 };
 
-Tuner.prototype.stop = () => {
-  self?.oscillator.stop();
-  self.oscillator = null;
+Tuner.prototype.stop = function () {
+  if ( this.oscillator ) {
+    this.oscillator.stop();
+    this.oscillator = null;
+  }
 
   ConsoleMessage("Stopped!");
 };
@@ -393,7 +397,6 @@ FrequencyBars.prototype.update = function (data) {
 };
 
 export const Application = function (isIOS) {
-  this.info = null;
   this.a4 = parseInt(localStorage.getItem("a4")) || 440;
   this.tuner = new Tuner(this.a4, isIOS);
   this.notes = new Notes(".notes", this.tuner);

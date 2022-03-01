@@ -7,7 +7,7 @@
       >
       <q-item-section
         >
-        <q-icon name="notifications_active"  color="accent" />
+        <q-icon name="notifications_active"  color="accent" size="lg" />
         </q-item-section>
         <q-item-section class="text-accent text-subtitle1">
           Tones Enabled
@@ -18,32 +18,39 @@
       class="q-mt-xl q-ml-lg absolute-top-left bg-accent"
       icon="settings"
       >
-    <q-fab-action
-          color="accent"
-          @click="getFreq"
-          outlined
-          stacked
-          push
-          glossy
-          rounded
-        >
-          <div class="text-body1">
+      <q-fab-action>
+
+        <q-list bordered dense separator class="q-mt-xl rounded-borders bg-primary">
+          <q-item 
+            clickable
+            v-ripple
+            @click="getFreq"
+            class="text-accent"
+            >
+            <q-item-section avatar>
+              <q-icon name="graphic_eq" />
+            </q-item-section>
+            <q-item-section>
+<div class="text-weight-bold ">
             <span>A<sub>4</sub></span>
              = 
              <span>{{ getA4 }} </span>
             Hz
           </div>
-        </q-fab-action>
-
-        <q-fab-action>
-         <q-toggle
+            </q-item-section>
+            </q-item>
+            <q-item>
+               <q-toggle
           v-model="toggleTones"
+          class="text-accent text-weight-bolder"
           label="Enable Tones"
           color="accent"
           checked-icon="check"
           unchecked-icon="clear"
           />
-        </q-fab-action>
+            </q-item>
+        </q-list>
+      </q-fab-action>
     </q-fab>
     <canvas class="frequency-bars"></canvas>
     <div class="meter">
@@ -69,15 +76,15 @@
         />
 
         <q-dialog v-model="q">
-          <q-card class="text-body1 text-center">
+          <q-card >
             <q-card-section>
               <div class="text-h5">Error:</div>
             </q-card-section>
             <q-card-section
               
               style="max-height: 60vh; max-width: 90vw">
-              <div v-if="appInfo">{{ app.info }}</div>
-              <div v-else id="infoMessage">{{ getQ($q) }}</div>
+              <div v-html="appInfo" />
+              <div vid="infoMessage">{{ getQ($q) }}</div>
             </q-card-section>
           </q-card>
         </q-dialog>
@@ -93,20 +100,21 @@ document.addEventListener(
   },
   false
 );
-import { Application } from "../../middleware/tools/tuner.js";
+import { Application, DEBUG_INFO } from "../../middleware/tools/tuner.js";
 
 export default {
   name: "Tuner",
   data: () => ({
     app: null,
     q: false,
+    info: DEBUG_INFO
   }),
   computed: {
     getA4() {
       return this.app?.a4 || "440";
     },
     appInfo() {
-      return this.app?.info;
+      return DEBUG_INFO;
     },
     toggleTones: { 
       get() {
@@ -125,7 +133,7 @@ export default {
   },
   methods: {
     getQ(obj) {
-      return this.app?.getQVAR(obj);
+      return DEBUG_INFO;
     },
     setFreq(freq) {
       this.app.a4 = freq;
