@@ -119,6 +119,7 @@ export default {
     }
   },
   mounted() {
+    console.log('mounted')
     this.app = new Application(this.$q.platform.is.ios);
     this.app.start();
   },

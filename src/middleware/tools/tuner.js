@@ -10,10 +10,10 @@ const ConsoleMessage = ( ...message ) => {
 const onAudioInput = (evt) => {
   // 'evt.data' is an integer array containing raw audio data
   //
-  ConsoleMessage("Audio data received: " + evt.data.length + " samples");
+  // ConsoleMessage("Audio data received: " + evt.data.length + " samples");
 
   // ... do something with the evt.data array ...
-  ConsoleMessage(typeof evt)
+  // ConsoleMessage(typeof evt)
 };
 
 const onAudioInputError = (error) => {
@@ -127,10 +127,10 @@ Tuner.prototype.setup = function (stream) {
   self.analyser.connect(self.scriptProcessor);
   self.scriptProcessor.connect(self.audioContext.destination);
   self.scriptProcessor.addEventListener("audioprocess", function (event) {
-    ConsoleMessage("audioinput", event);
     const frequency = self.pitchDetector.do(
       event.inputBuffer.getChannelData(0)
-    );
+      );
+      // ConsoleMessage("audioinput freq: ", frequency);
     if (frequency && self.onNoteDetected) {
       const note = self.getNote(frequency);
       self.onNoteDetected({
