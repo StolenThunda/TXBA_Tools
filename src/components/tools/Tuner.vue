@@ -1,5 +1,50 @@
 <template>
   <div>
+   <q-item
+      v-if="toggleTones"
+      dense
+      class="q-mt-xl q-mr-lg absolute-top-right"
+      >
+      <q-item-section
+        >
+        <q-icon name="notifications_active"  color="accent" />
+        </q-item-section>
+        <q-item-section class="text-accent text-subtitle1">
+          Tones Enabled
+        </q-item-section>
+      </q-item>
+    <q-fab
+      label-position="left"
+      class="q-mt-xl q-ml-lg absolute-top-left bg-accent"
+      icon="settings"
+      >
+    <q-fab-action
+          color="accent"
+          @click="getFreq"
+          outlined
+          stacked
+          push
+          glossy
+          rounded
+        >
+          <div class="text-body1">
+            <span>A<sub>4</sub></span>
+             = 
+             <span>{{ getA4 }} </span>
+            Hz
+          </div>
+        </q-fab-action>
+
+        <q-fab-action>
+         <q-toggle
+          v-model="toggleTones"
+          label="Enable Tones"
+          color="accent"
+          checked-icon="check"
+          unchecked-icon="clear"
+          />
+        </q-fab-action>
+    </q-fab>
     <canvas class="frequency-bars"></canvas>
     <div class="meter">
       <div class="meter-dot"></div>
@@ -9,49 +54,78 @@
       <div class="notes-list"></div>
       <div class="frequency text-h5"><span></span>Hz</div>
       <div>
-        <!-- <q-btn
-          class="q-ma-xl"
+        
+        <q-btn
+          class="q-ma-md"
           color="accent"
-          @click="getFreq"
-          label="Change Frequency"
-        /> -->
-       <q-btn
-        class="q-ma-xl"
-          color="accent"
-          @click="getFreq"
-          icon="graphic_eq"
-          stacked 
+          @click="q = !q"
+          label="Errors"
+          icon="error"
+          v-if="appInfo !== null"
+          stacked
           push
           glossy
           rounded
-          >
-          <div class="text-h4">
-            A<sub>4</sub>=<span>{{ getA4 }} </span>
-            Hz
-          </div>
-        </q-btn>
+        />
+
+        <q-dialog v-model="q">
+          <q-card class="text-body1 text-center">
+            <q-card-section>
+              <div class="text-h5">Error:</div>
+            </q-card-section>
+            <q-card-section
+              
+              style="max-height: 60vh; max-width: 90vw">
+              <div v-if="appInfo">{{ app.info }}</div>
+              <div v-else id="infoMessage">{{ getQ($q) }}</div>
+            </q-card-section>
+          </q-card>
+        </q-dialog>
       </div>
     </div>
   </div>
 </template>
 <script>
+document.addEventListener(
+  "deviceready",
+  () => {
+    console.log("deviceready");
+  },
+  false
+);
 import { Application } from "../../middleware/tools/tuner.js";
 
 export default {
   name: "Tuner",
   data: () => ({
     app: null,
+    q: false,
   }),
   computed: {
     getA4() {
       return this.app?.a4 || "440";
     },
+    appInfo() {
+      return this.app?.info;
+    },
+    toggleTones: { 
+      get() {
+        return !this.app?.notes.isAutoMode;
+      },
+      set(value) {
+        this.app?.notes.toggleAutoMode();
+        this.enableTones = !this.app.notes.isAutoMode || false;
+      }
+    }
   },
   mounted() {
-    this.app =  new Application()
+    this.app = new Application(this.$q.platform.is.ios);
     this.app.start();
   },
   methods: {
+    getQ(obj) {
+      return this.app?.getQVAR(obj);
+    },
     setFreq(freq) {
       this.app.a4 = freq;
       this.app.tuner.middleA = freq;
@@ -75,6 +149,7 @@ export default {
             type: "number", // optional
           },
           cancel: true,
+          standout: true,
         })
         .onOk((data) => {
           console.log(">>>> OK, received", data);
@@ -88,6 +163,9 @@ export default {
         });
     },
   },
+  destroyed(){
+    this.app?.stop()
+  }
 };
 </script>
 

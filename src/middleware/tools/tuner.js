@@ -1,110 +1,170 @@
-import aubio from "aubiojs"
-export const Tuner = function ( a4 ) {
-  this.middleA = a4 || 440
-  this.semitone = 69
-  this.bufferSize = 4096
+import aubio from "aubiojs";
+import { consoleMessage, getMicrophonePermission } from "./tunerLib.js";
+
+const ConsoleMessage = ( ...message ) => {
+  // console.trace( message );
+  consoleMessage(message);
+  Application.info += message;
+};
+
+const onAudioInput = (evt) => {
+  // 'evt.data' is an integer array containing raw audio data
+  //
+  ConsoleMessage("Audio data received: " + evt.data.length + " samples");
+
+  // ... do something with the evt.data array ...
+  ConsoleMessage(typeof evt)
+};
+
+const onAudioInputError = (error) => {
+  alert("onAudioInputError event recieved: " + JSON.stringify(error));
+};
+
+// Listen to audioinput events
+window.addEventListener("audioinput", onAudioInput, false);
+
+// Listen to audioinputerror events
+window.addEventListener("audioinputerror", onAudioInputError, false);
+
+
+export const Tuner = function (a4, isIOS) {
+  this.info = null;
+  this.middleA = a4 || 440;
+  this.semitone = 69;
+  this.bufferSize = 4096;
   this.noteStrings = [
-    'C',
-    'C♯',
-    'D',
-    'D♯',
-    'E',
-    'F',
-    'F♯',
-    'G',
-    'G♯',
-    'A',
-    'A♯',
-    'B'
-  ]
+    "C",
+    "C♯",
+    "D",
+    "D♯",
+    "E",
+    "F",
+    "F♯",
+    "G",
+    "G♯",
+    "A",
+    "A♯",
+    "B",
+  ];
+  this.isIOS = isIOS || false;
+  if (this.isIOS) {
+    ConsoleMessage("initialize IOS tuner");
+    this.checkIOSPerms();
+  } else {
+    this.initGetUserMedia();
+    ConsoleMessage("initialize WebAudio tuner");
+  }
+};
 
-  this.initGetUserMedia()
-}
-
-Tuner.prototype.initGetUserMedia = function() {
-  window.AudioContext = window.AudioContext || window.webkitAudioContext
+Tuner.prototype.initGetUserMedia = function () {
+  window.AudioContext = window.AudioContext || window.webkitAudioContext;
   if (!window.AudioContext) {
-    return alert('AudioContext not supported')
+    return alert("AudioContext not supported");
   }
 
   // Older browsers might not implement mediaDevices at all, so we set an empty object first
   if (navigator.mediaDevices === undefined) {
-    navigator.mediaDevices = {}
+    navigator.mediaDevices = {};
   }
 
   // Some browsers partially implement mediaDevices. We can't just assign an object
   // with getUserMedia as it would overwrite existing properties.
   // Here, we will just add the getUserMedia property if it's missing.
   if (navigator.mediaDevices.getUserMedia === undefined) {
-    navigator.mediaDevices.getUserMedia = function(constraints) {
+    navigator.mediaDevices.getUserMedia = function (constraints) {
       // First get ahold of the legacy getUserMedia, if present
       const getUserMedia =
-        navigator.webkitGetUserMedia || navigator.mozGetUserMedia
+        navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
       // Some browsers just don't implement it - return a rejected promise with an error
       // to keep a consistent interface
       if (!getUserMedia) {
-        alert('getUserMedia is not implemented in this browser')
+        alert("getUserMedia is not implemented in this browser");
       }
 
       // Otherwise, wrap the call to the old navigator.getUserMedia with a Promise
-      return new Promise(function(resolve, reject) {
-        getUserMedia.call(navigator, constraints, resolve, reject)
-      })
-    }
+      return new Promise(function (resolve, reject) {
+        getUserMedia?.call(navigator, constraints, resolve, reject);
+      });
+    };
   }
-}
+};
 
 Tuner.prototype.startRecord = function () {
-  const self = this
-  navigator.mediaDevices
-    .getUserMedia({ audio: true })
-    .then(function(stream) {
-      self.audioContext.createMediaStreamSource(stream).connect(self.analyser)
-      self.analyser.connect(self.scriptProcessor)
-      self.scriptProcessor.connect(self.audioContext.destination)
-      self.scriptProcessor.addEventListener('audioprocess', function(event) {
-        const frequency = self.pitchDetector.do(
-          event.inputBuffer.getChannelData(0)
-        )
-        if (frequency && self.onNoteDetected) {
-          const note = self.getNote(frequency)
-          self.onNoteDetected({
-            name: self.noteStrings[note % 12],
-            value: note,
-            cents: self.getCents(frequency, note),
-            octave: parseInt(note / 12) - 1,
-            frequency: frequency
-          })
-        }
-      })
-    })
-    .catch(function(error) {
-      alert(error.name + ': ' + error.message)
-    })
-}
-
-Tuner.prototype.init = function() {
-  this.audioContext = new  (window.AudioContext || window.webkitAudioContext)
-  this.analyser = this.audioContext.createAnalyser()
+  const self = this;
+  if (self.isIOS) {
+    ConsoleMessage("Microphone input starting...");
+    window.audioinput.start();
+    ConsoleMessage("Microphone input started!");
+    let stream = window.audioinput.getStream();
+    ConsoleMessage(`stream: ${stream}`);
+    this.audioContext = window.audioinput.getAudioContext();
+    self.setup(stream);
+  } else {
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then((stream) => self.setup(stream))
+      .then(() => ConsoleMessage("Microphone input started!"))
+      .catch(function (error) {
+        alert(error.name + ": " + error.message);
+      });
+  }
+};
+Tuner.prototype.getAudioContext = function () {
+  return this.audioContext
+    ? this.audioContext
+    : window.audioinput
+    ? window.audioinput.getAudioContext()
+    : new (window.AudioContext || window.webkitAudioContext)();
+};
+Tuner.prototype.setup = function (stream) {
+  const self = this;
+  ConsoleMessage("setup");
+  self.audioContext = self.getAudioContext();
+  // if (!stream) stream = window.audioinput.getStream();
+  ConsoleMessage(`stream: ${stream}`);
+  self.audioContext.createMediaStreamSource(stream).connect(self.analyser);
+  self.analyser.connect(self.scriptProcessor);
+  self.scriptProcessor.connect(self.audioContext.destination);
+  self.scriptProcessor.addEventListener("audioprocess", function (event) {
+    ConsoleMessage("audioinput", event);
+    const frequency = self.pitchDetector.do(
+      event.inputBuffer.getChannelData(0)
+    );
+    if (frequency && self.onNoteDetected) {
+      const note = self.getNote(frequency);
+      self.onNoteDetected({
+        name: self.noteStrings[note % 12],
+        value: note,
+        cents: self.getCents(frequency, note),
+        octave: parseInt(note / 12) - 1,
+        frequency: frequency,
+      });
+    }
+  });
+};
+Tuner.prototype.init = function () {
+  this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  ConsoleMessage(`audioContext: ${this.audioContext}`);
+  this.analyser = this.audioContext.createAnalyser();
   this.scriptProcessor = this.audioContext.createScriptProcessor(
     this.bufferSize,
     1,
     1
-  )
+  );
 
-  const self = this
+  const self = this;
 
-  aubio().then(function(aubio) {
+  aubio().then(function (aubio) {
     self.pitchDetector = new aubio.Pitch(
-      'default',
+      "default",
       self.bufferSize,
       1,
       self.audioContext.sampleRate
-    )
-    self.startRecord()
-  })
-}
+    );
+    self.startRecord();
+  });
+};
 
 /**
  * get musical note from frequency
@@ -112,10 +172,10 @@ Tuner.prototype.init = function() {
  * @param {number} frequency
  * @returns {number}
  */
-Tuner.prototype.getNote = function(frequency) {
-  const note = 12 * (Math.log(frequency / this.middleA) / Math.log(2))
-  return Math.round(note) + this.semitone
-}
+Tuner.prototype.getNote = function (frequency) {
+  const note = 12 * (Math.log(frequency / this.middleA) / Math.log(2));
+  return Math.round(note) + this.semitone;
+};
 
 /**
  * get the musical note's standard frequency
@@ -123,9 +183,9 @@ Tuner.prototype.getNote = function(frequency) {
  * @param note
  * @returns {number}
  */
-Tuner.prototype.getStandardFrequency = function(note) {
-  return this.middleA * Math.pow(2, (note - this.semitone) / 12)
-}
+Tuner.prototype.getStandardFrequency = function (note) {
+  return this.middleA * Math.pow(2, (note - this.semitone) / 12);
+};
 
 /**
  * get cents difference between given frequency and musical note's standard frequency
@@ -134,145 +194,171 @@ Tuner.prototype.getStandardFrequency = function(note) {
  * @param {number} note
  * @returns {number}
  */
-Tuner.prototype.getCents = function(frequency, note) {
+Tuner.prototype.getCents = function (frequency, note) {
   return Math.floor(
     (1200 * Math.log(frequency / this.getStandardFrequency(note))) / Math.log(2)
-  )
-}
+  );
+};
 
 /**
  * play the musical note
  *
  * @param {number} frequency
  */
-Tuner.prototype.play = function(frequency) {
-  if (!this.oscillator) {
-    this.oscillator = this.audioContext.createOscillator()
-    this.oscillator.connect(this.audioContext.destination)
-    this.oscillator.start()
+Tuner.prototype.play = function (frequency) {
+  this.audioContext = this.getAudioContext();
+  ConsoleMessage(`audioContext: ${this.audioContext}`);
+  if (!self.oscillator) {
+    self.oscillator = this.audioContext.createOscillator();
+    self.oscillator.connect(this.audioContext.destination);
+    self.oscillator.start();
   }
-  this.oscillator.frequency.value = frequency
-}
+  self.oscillator.frequency.value = frequency;
+};
 
-Tuner.prototype.stop = function() {
-  this.oscillator.stop()
-  this.oscillator = null
-}
-export const Notes = function ( selector, tuner ) {
-  this.tuner = tuner
-  this.isAutoMode = true
-  this.$root = document.querySelector(selector)
-  this.$notesList = this.$root.querySelector('.notes-list')
-  this.$frequency = this.$root.querySelector('.frequency')
-  this.$notes = []
-  this.$notesMap = {}
-  this.createNotes()
-}
+Tuner.prototype.stop = () => {
+  self?.oscillator.stop();
+  self.oscillator = null;
 
-Notes.prototype.createNotes = function() {
-  const minOctave = 2
-  const maxOctave = 5
+  ConsoleMessage("Stopped!");
+};
+Tuner.prototype.checkIOSPerms = function () {
+  try {
+    if (window.audioinput && !window.audioinput.isCapturing()) {
+      getMicrophonePermission(
+        self.setup,
+        function (deniedMsg) {
+          ConsoleMessage(deniedMsg);
+        },
+        function (errorMsg) {
+          ConsoleMessage(errorMsg);
+        }
+      );
+    } else {
+      ConsoleMessage("Already capturing!");
+    }
+  } catch (ex) {
+    ConsoleMessage("startCapture exception: " + ex);
+  }
+};
+export const Notes = function (selector, tuner) {
+  this.tuner = tuner;
+  this.isAutoMode = true;
+  this.$root = document.querySelector(selector);
+  this.$notesList = this.$root.querySelector(".notes-list");
+  this.$frequency = this.$root.querySelector(".frequency");
+  this.$notes = [];
+  this.$notesMap = {};
+  this.createNotes();
+};
+
+Notes.prototype.createNotes = function () {
+  const minOctave = 2;
+  const maxOctave = 5;
   for (var octave = minOctave; octave <= maxOctave; octave += 1) {
     for (var n = 0; n < 12; n += 1) {
-      const $note = document.createElement('div')
-      $note.className = 'note'
-      $note.dataset.name = this.tuner.noteStrings[n]
-      $note.dataset.value = 12 * (octave + 1) + n
-      $note.dataset.octave = octave.toString()
+      const $note = document.createElement("div");
+      $note.className = "note";
+      $note.dataset.name = this.tuner.noteStrings[n];
+      $note.dataset.value = 12 * (octave + 1) + n;
+      $note.dataset.octave = octave.toString();
       $note.dataset.frequency = this.tuner.getStandardFrequency(
         $note.dataset.value
-      )
+      );
       $note.innerHTML =
         $note.dataset.name[0] +
         '<span class="note-sharp">' +
-        ($note.dataset.name[1] || '') +
-        '</span>' +
+        ($note.dataset.name[1] || "") +
+        "</span>" +
         '<span class="note-octave">' +
         $note.dataset.octave +
-        '</span>'
-      this.$notesList.appendChild($note)
-      this.$notes.push($note)
-      this.$notesMap[$note.dataset.value] = $note
+        "</span>";
+      this.$notesList.appendChild($note);
+      this.$notes.push($note);
+      this.$notesMap[$note.dataset.value] = $note;
     }
   }
 
-  const self = this
-  this.$notes.forEach(function($note) {
-    $note.addEventListener('click', function() {
+  const self = this;
+  this.$notes.forEach(function ($note) {
+    $note.addEventListener("click", function () {
       if (self.isAutoMode) {
-        return
+        return;
       }
 
-      const $active = self.$notesList.querySelector('.active')
+      const $active = self.$notesList.querySelector(".active");
       if ($active === this) {
-        self.tuner.stop()
-        $active.classList.remove('active')
+        self.tuner.stop();
+        $active.classList.remove("active");
       } else {
-        self.tuner.play(this.dataset.frequency)
-        self.update($note.dataset)
+        self.tuner.play(this.dataset.frequency);
+        self.update($note.dataset);
       }
-    })
-  })
-}
+    });
+  });
+};
 
-Notes.prototype.active = function($note) {
-  this.clearActive()
-  $note.classList.add('active')
+Notes.prototype.active = function ($note) {
+  ConsoleMessage("active note:", $note);
+  this.clearActive();
+  $note.classList.add("active");
   this.$notesList.scrollLeft =
-    $note.offsetLeft - (this.$notesList.clientWidth - $note.clientWidth) / 2
-}
+    $note.offsetLeft - (this.$notesList.clientWidth - $note.clientWidth) / 2;
+};
 
-Notes.prototype.clearActive = function() {
-  const $active = this.$notesList.querySelector('.active')
+Notes.prototype.clearActive = function () {
+  const $active = this.$notesList.querySelector(".active");
   if ($active) {
-    $active.classList.remove('active')
+    $active.classList.remove("active");
   }
-}
+};
 
-Notes.prototype.update = function ( note ) {
+Notes.prototype.update = function (note) {
+  ConsoleMessage("update note val", note.value);
   if (note.value in this.$notesMap) {
-    this.active(this.$notesMap[note.value])
+    this.active(this.$notesMap[note.value]);
     this.$frequency.childNodes[0].textContent = parseFloat(
       note.frequency
-    ).toFixed(1)
+    ).toFixed(1);
   }
-}
+};
 
-Notes.prototype.toggleAutoMode = function() {
-  if (this.isAutoMode) {
-    this.clearActive()
-  }
-  this.isAutoMode = !this.isAutoMode
-}
+Notes.prototype.toggleAutoMode = function () {
+  if ( this.isAutoMode ) {
+    this.clearActive();
+  } else { this.tuner.stop() }
+  this.isAutoMode = !this.isAutoMode;
+};
 
 /**
  * @param {string} selector
  * @constructor
  */
-export const Meter = function(selector) {
-  this.$root = document.querySelector(selector)
-  this.$pointer = this.$root.querySelector('.meter-pointer')
-  this.init()
-}
+export const Meter = function (selector) {
+  this.$root = document.querySelector(selector);
+  this.$pointer = this.$root.querySelector(".meter-pointer");
+  this.init();
+};
 
-Meter.prototype.init = function() {
+Meter.prototype.init = function () {
   for (var i = 0; i <= 10; i += 1) {
-    const $scale = document.createElement('div')
-    $scale.className = 'meter-scale'
-    $scale.style.transform = 'rotate(' + (i * 9 - 45) + 'deg)'
+    const $scale = document.createElement("div");
+    $scale.className = "meter-scale";
+    $scale.style.transform = "rotate(" + (i * 9 - 45) + "deg)";
     if (i % 5 === 0) {
-      $scale.classList.add('meter-scale-strong')
+      $scale.classList.add("meter-scale-strong");
     }
-    this.$root.appendChild($scale)
+    this.$root.appendChild($scale);
   }
-}
+};
 
 /**
  * @param {number} deg
  */
-Meter.prototype.update = function(deg) {
-  this.$pointer.style.transform = 'rotate(' + deg + 'deg)'
-}
+Meter.prototype.update = function (deg) {
+  ConsoleMessage(`deg: ${deg}`);
+  this.$pointer.style.transform = "rotate(" + deg + "deg)";
+};
 
 /**
  * the frequency histogram
@@ -280,73 +366,103 @@ Meter.prototype.update = function(deg) {
  * @param {string} selector
  * @constructor
  */
-export const FrequencyBars = function(selector) {
-  this.$canvas = document.querySelector(selector)
-  this.$canvas.width = document.body.clientWidth
-  this.$canvas.height = document.body.clientHeight / 2
-  this.canvasContext = this.$canvas.getContext('2d')
-}
+export const FrequencyBars = function (selector) {
+  this.$canvas = document.querySelector(selector);
+  this.$canvas.width = document.body.clientWidth;
+  this.$canvas.height = document.body.clientHeight / 2;
+  this.canvasContext = this.$canvas.getContext("2d");
+};
 
 /**
  * @param {Uint8Array} data
  */
-FrequencyBars.prototype.update = function ( data ) {
-  const length = 64 // low frequency only
-  const width = this.$canvas.width / length - 0.5
-  this.canvasContext.clearRect( 0, 0, this.$canvas.width, this.$canvas.height )
+FrequencyBars.prototype.update = function (data) {
+  const length = 64; // low frequency only
+  const width = this.$canvas.width / length - 0.5;
+  this.canvasContext.clearRect(0, 0, this.$canvas.width, this.$canvas.height);
   this.canvasContext.globalAlpha = 0.35;
   for (var i = 0; i < length; i += 1) {
-    this.canvasContext.fillStyle = '#ef6c00'
+    this.canvasContext.fillStyle = "#ef6c00";
     this.canvasContext.fillRect(
       i * (width + 0.5),
       this.$canvas.height - data[i],
       width,
       data[i]
-    )
+    );
   }
-}
+};
 
-export const Application = function () {
-  this.a4 = parseInt(localStorage.getItem('a4')) || 440
-  this.tuner = new Tuner(this.a4)
-  this.notes = new Notes('.notes', this.tuner)
-  this.meter = new Meter('.meter')
-  this.frequencyBars = new FrequencyBars('.frequency-bars')
-  this.update({ name: 'A', frequency: this.a4, octave: 4, value: 69, cents: 0 })
-}
+export const Application = function (isIOS) {
+  this.info = null;
+  this.a4 = parseInt(localStorage.getItem("a4")) || 440;
+  this.tuner = new Tuner(this.a4, isIOS);
+  this.notes = new Notes(".notes", this.tuner);
+  this.meter = new Meter(".meter");
+  this.frequencyBars = new FrequencyBars(".frequency-bars");
+  this.update({
+    name: "A",
+    frequency: this.a4,
+    octave: 4,
+    value: 69,
+    cents: 0,
+  });
+};
 
-Application.prototype.start = function() {
-  const self = this
+Application.prototype.start = function () {
+  const self = this;
 
-  this.tuner.onNoteDetected = function(note) {
+  this.tuner.onNoteDetected = function (note) {
     if (self.notes.isAutoMode) {
       if (self.lastNote === note.name) {
-        self.update(note)
+        self.update(note);
       } else {
-        self.lastNote = note.name
+        self.lastNote = note.name;
       }
     }
-  }
+  };
+  this.updateFrequencyBars();
+  this.tuner.init();
+  this.frequencyData = new Uint8Array(self.tuner.analyser.frequencyBinCount);
+};
 
-  this.updateFrequencyBars()
-  this.tuner.init()
-  this.frequencyData = new Uint8Array(self.tuner.analyser.frequencyBinCount)
-}
+Application.prototype.stop = function () {
+  if (window.audioinput && window.audioinput.isCapturing()) {
+    window.audioinput.stop();
+    // window.audioinput.disconnect();
+  }
+};
 
 Application.prototype.updateFrequencyBars = function () {
-  if (this.tuner.analyser) {
-    this.tuner.analyser.getByteFrequencyData(this.frequencyData)
-    this.frequencyBars.update(this.frequencyData)
+  if (this.tuner.isIOS && this.frequencyData) {
+    let data = Object.values(this.frequencyData);
+    if ( data.some( ( v ) => v >  0 ) ) {
+      ConsoleMessage(`freq obj update (${data.some((v) => v > 0)}): ${data}`);
+      this.frequencyData = new Uint8Array( data );
+    }
   }
-  requestAnimationFrame(this.updateFrequencyBars.bind(this))
-}
+  
+  if (this.tuner.analyser) {
+    // ConsoleMessage(`freq update ${Obtraject.values(this.frequencyData)}`);
+    let data = new Uint8Array( Object.values( this.frequencyData ) );
+    this.tuner.analyser.getByteFrequencyData(data);
 
-Application.prototype.update = function(note) {
-  this.notes.update(note)
-  this.meter.update((note.cents / 50) * 45)
-}
+    this.frequencyBars.update(data);
+  }
+  requestAnimationFrame(this.updateFrequencyBars.bind(this));
+};
+
+Application.prototype.update = function (note) {
+  ConsoleMessage("app update", note.cents);
+  this.notes.update(note);
+  this.meter.update((note.cents / 50) * 45);
+};
 
 // noinspection JSUnusedGlobalSymbols
-Application.prototype.toggleAutoMode = function() {
-  this.notes.toggleAutoMode()
-}
+Application.prototype.toggleAutoMode = function () {
+  this.notes.toggleAutoMode();
+};
+
+Application.prototype.getQVAR = function (obj) {
+  return JSON.stringify(window.audioinput, null, 2);
+};
+

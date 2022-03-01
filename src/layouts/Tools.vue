@@ -25,7 +25,7 @@
           label="Logout"
           color="accent"
           icon="close"
-          @click="$store.dispatch('auth/logout_user')"
+          @click="logout"
         />
       </q-bar>
     </q-header>
@@ -48,8 +48,22 @@ export default {
       return this.$route.meta.name === undefined;
     },
   },
+  methods: {
+    logout() {
+      this.$q.dialog({
+        title: "Confirm",
+        message: "Are you sure you want to logout?",
+        cancel: true,
+        persistent: true,
+      })
+      .onOk(() => this.$store.dispatch("auth/logout_user"))
+      .onCancel(() => this.$q.notify({
+        title: "Cancelled",
+        color: "negative",
+        message: "Logout cancelled",
+        timeout: 1000,
+      }));
+    },
+  },
 };
 </script>
-<style scoped>
-@import url("https://texasbluesalley.com/?css=proplayer7-5/css-TunerTool.v.1601956345");
-</style>
