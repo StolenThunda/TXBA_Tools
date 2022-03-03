@@ -1,55 +1,84 @@
 <template>
   <div>
-   <q-item
-      v-if="toggleTones"
-      dense
-      class="q-mt-xl q-mr-lg absolute-top-right"
-      >
-      <q-item-section
-        >
-        <q-icon name="notifications_active"  color="accent" size="lg" />
-        </q-item-section>
-        <q-item-section class="text-accent text-subtitle1">
-          Tones Enabled
-        </q-item-section>
-      </q-item>
-    <q-fab
-      label-position="left"
-      class="q-mt-xl q-ml-lg absolute-top-left bg-accent"
-      icon="settings"
-      >
-      <q-fab-action>
-
-        <q-list bordered dense separator class="q-mt-xl rounded-borders bg-primary">
-          <q-item 
-            clickable
-            v-ripple
-            @click="getFreq"
-            class="text-accent"
-            >
-            <q-item-section avatar>
-              <q-icon name="graphic_eq" />
-            </q-item-section>
-            <q-item-section>
-<div class="text-weight-bold ">
-            <span>A<sub>4</sub></span>
-             = 
-             <span>{{ getA4 }} </span>
-            Hz
-          </div>
-            </q-item-section>
-            </q-item>
+    <q-item v-if="toggleTones" dense class="q-mt-xl q-mr-lg absolute-top-right">
+      <q-item-section>
+        <q-icon name="notifications_active" color="accent" size="lg" />
+      </q-item-section>
+      <q-item-section class="text-accent text-subtitle1">
+        Tones Enabled
+      </q-item-section>
+    </q-item>
+    <q-fab class="q-ml-xl q-mt-xl absolute-top-left bg-accent" icon="settings">
+      <template #label>
+        <div class="text-weight-bold">
+          <span>A<sub>4</sub></span>
+          =
+          <span>{{ getA4 }} </span>
+          Hz
+        </div>
+      </template>
+      <q-fab-action class="">
+          <q-list dense  class=" q-mt-xl q-pt-xl">
             <q-item>
-               <q-toggle
-          v-model="toggleTones"
-          class="text-accent text-weight-bolder"
-          label="Enable Tones"
-          color="accent"
-          checked-icon="check"
-          unchecked-icon="clear"
-          />
+              <q-item-section>
+                <q-btn-dropdown split class="glossy" @click="getFreq">
+                  <template v-slot:label>
+                    <q-item color="accent">
+                      <q-item-section avatar>
+                        <q-icon name="graphic_eq" color="accent" />
+                      </q-item-section>
+                      <q-item-label class="text-accent"
+                        >Change A<sub>4</sub> Frequency</q-item-label
+                      >
+                    </q-item>
+                  </template>
+                  <q-list v-close-popup separator dense bordered>
+                    <q-item-label header>Common</q-item-label>
+                    <q-separator />
+                    <q-item
+                      :clickable="!is440"
+                      :disable="is440"
+                      @click="setFreq(440)"
+                      >
+                      <q-item-section>
+                        <q-item-label>440 Hz</q-item-label>
+                      </q-item-section>
+                    </q-item>
+                   <q-item
+                      :clickable="!is432"
+                      :disable="is432"
+                      @click="setFreq(432)"
+                      >
+                      <q-item-section>
+                        <q-item-label>432 Hz</q-item-label>
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-btn-dropdown>
+              </q-item-section>
             </q-item>
-        </q-list>
+            <q-item >
+              <!-- <q-item-section></q-item-section> -->
+              <q-item-section  >
+                <q-toggle
+                  v-model="toggleTones"
+                  class="text-accent q-pl-lg q-ml-xl"
+                  label="Enable Tones"
+                  color="accent"
+                  checked-icon="check"
+                  unchecked-icon="clear"
+                />
+                <q-tooltip>
+                  <span class="text-overline">Tones:</span>
+                  <p class="text-caption">
+                    When enabled, select a note to hear it. (must be disabled to
+                    enable to tuner)
+                  </p>
+                </q-tooltip>
+              </q-item-section>
+              <!-- <q-item-section side></q-item-section> -->
+            </q-item>
+          </q-list>
       </q-fab-action>
     </q-fab>
     <canvas class="frequency-bars"></canvas>
@@ -61,7 +90,6 @@
       <div class="notes-list"></div>
       <div class="frequency text-h5"><span></span>Hz</div>
       <div>
-        
         <q-btn
           class="q-ma-md"
           color="accent"
@@ -76,15 +104,13 @@
         />
 
         <q-dialog v-model="q">
-          <q-card >
+          <q-card>
             <q-card-section>
               <div class="text-h5">Error:</div>
             </q-card-section>
-            <q-card-section
-              
-              style="max-height: 60vh; max-width: 90vw">
-              <div v-html="appInfo" />
-              <div vid="infoMessage">{{ getQ($q) }}</div>
+            <q-card-section style="max-height: 60vh; max-width: 90vw">
+              <!-- <div v-html="appInfo" /> -->
+              <!-- <div v-id="infoMessage">{{ getQ($q) }}</div> -->
             </q-card-section>
           </q-card>
         </q-dialog>
@@ -107,31 +133,33 @@ export default {
   data: () => ({
     app: null,
     q: false,
-    info: DEBUG_INFO
+    info: DEBUG_INFO,
   }),
   computed: {
+    is440() { return this.app?.a4 === 440 },
+    is432() { return this.app?.a4 === 432 },
     getA4() {
       return this.app?.a4 || "440";
     },
     appInfo() {
       return DEBUG_INFO;
     },
-    toggleTones: { 
+    toggleTones: {
       get() {
         return !this.app?.notes.isAutoMode;
       },
       set(value) {
         this.app?.notes.toggleAutoMode();
         this.enableTones = !this.app.notes.isAutoMode || false;
-      }
-    }
+      },
+    },
   },
   mounted() {
-    console.log('mounted')
+    console.log("mounted");
     this.app = new Application(this.$q.platform.is.ios);
     this.app.start();
   },
-  methods: {
+  methods: { 
     getQ(obj) {
       return DEBUG_INFO;
     },
@@ -172,9 +200,9 @@ export default {
         });
     },
   },
-  destroyed(){
-    this.app?.stop()
-  }
+  destroyed() {
+    this.app?.stop();
+  },
 };
 </script>
 

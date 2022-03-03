@@ -113,26 +113,48 @@ Tuner.prototype.startRecord = function () {
   }
 };
 Tuner.prototype.getAudioContext = function () {
-  return this.audioContext
-    ? this.audioContext
-    : window.audioinput
-    ? window.audioinput.getAudioContext()
-    : new (window.AudioContext || window.webkitAudioContext)();
+  if ( this.audioContext ) return this.audioContext;
+  if (window.audioinput) return window.audioinput.getAudioContext()
+  let ctx =  window.AudioContext || window.webkitAudioContext
+  return new ctx()
+}
+
+Tuner.prototype.createWorkletNode = async function() {
+  try {
+    let audioContext = this.getAudioContext()
+    // await audioContext.resume()
+    await audioContext.audioWorklet.addModule( "tunerApp.worklet.js" )
+
+  } catch ( e ) {
+    return null;
+  }
+  return  new AudioWorkletNode(
+    audioContext,
+    'tunerApp.worklet'
+  )
+  .then( (e) => { console.log('create worklet', e)}) 
+ 
 };
 Tuner.prototype.setup = function (stream) {
   const self = this;
   ConsoleMessage("setup");
   self.audioContext = self.getAudioContext();
   if (!stream) stream = window.audioinput.getStream();
-  ConsoleMessage(`stream: ${stream}`);
-  self.audioContext.createMediaStreamSource(stream).connect(self.analyser);
-  self.analyser.connect(self.scriptProcessor);
-  self.scriptProcessor.connect(self.audioContext.destination);
-  self.scriptProcessor.addEventListener("audioprocess", function (event) {
-    const frequency = self.pitchDetector.do(
-      event.inputBuffer.getChannelData(0)
-      );
-      // ConsoleMessage("audioinput freq: ", frequency);
+  self.audioContext
+    .createMediaStreamSource( stream )
+    .connect( self.analyser )
+    .connect( self.workletNode )
+    .connect( self.audioContext.destination );
+  ConsoleMessage(self.analyser);
+
+
+  // self.workletNode.addEventListener("audioprocess", function (event) {
+  self.workletNode.port.onmessage = (e) => {
+    if (e.data.eventType === 'data') {
+      const audioData = e.data.audioBuffer;
+      // process pcm data
+      const frequency = self.pitchDetector.do( audioData );
+    ConsoleMessage("worklet data: ", audioData);
     if (frequency && self.onNoteDetected) {
       const note = self.getNote(frequency);
       self.onNoteDetected({
@@ -142,18 +164,17 @@ Tuner.prototype.setup = function (stream) {
         octave: parseInt(note / 12) - 1,
         frequency: frequency,
       });
+    }   
     }
-  });
+    if (e.data.eventType === 'stop') {
+      // recording has stopped
+    }
+  }
 };
-Tuner.prototype.init = function () {
-  this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  ConsoleMessage(`audioContext: ${this.audioContext}`);
+Tuner.prototype.init = async function () {
+  this.audioContext = this.getAudioContext();
   this.analyser = this.audioContext.createAnalyser();
-  this.scriptProcessor = this.audioContext.createScriptProcessor(
-    this.bufferSize,
-    1,
-    1
-  );
+  this.workletNode = this.createWorkletNode()
 
   const self = this;
 
@@ -431,7 +452,6 @@ Application.prototype.start = function () {
 Application.prototype.stop = function () {
   if (window.audioinput && window.audioinput.isCapturing()) {
     window.audioinput.stop();
-    // window.audioinput.disconnect();
   }
 };
 
