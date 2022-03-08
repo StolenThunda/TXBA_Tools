@@ -80,7 +80,7 @@ module.exports = function (/* ctx */ ) {
     devServer: {
       host: '0.0.0.0',
       // useLocalIp: true,
-      host: 'localhost',
+      // host: 'localhost',
       https: false,
       port: 8088,
       watchOptions: {
