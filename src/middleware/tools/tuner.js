@@ -2,20 +2,20 @@ import aubio from "aubiojs";
 import { consoleMessage, getMicrophonePermission } from "./tunerLib.js";
 
 
+
 export var DEBUG_INFO = null;
-const ConsoleMessage = ( ...message ) => {
-  // console.trace( message );
-  DEBUG_INFO += `<br /><br /> ${ message}`;
+const ConsoleMessage = (...message) => {
+  console.trace( message );
+  DEBUG_INFO += `<br /><br /> ${message}`;
   consoleMessage(message);
 };
 
 const onAudioInput = (evt) => {
   // 'evt.data' is an integer array containing raw audio data
   //
-  // ConsoleMessage("Audio data received: " + evt.data.length + " samples");
-
+  // // ConsoleMessage("Audio data received: " + evt.data.length + " samples");
   // ... do something with the evt.data array ...
-  // ConsoleMessage(typeof evt)
+  // // ConsoleMessage(typeof evt)
 };
 
 const onAudioInputError = (error) => {
@@ -27,7 +27,6 @@ window.addEventListener("audioinput", onAudioInput, false);
 
 // Listen to audioinputerror events
 window.addEventListener("audioinputerror", onAudioInputError, false);
-
 
 export const Tuner = function (a4, isIOS) {
   this.info = null;
@@ -50,11 +49,11 @@ export const Tuner = function (a4, isIOS) {
   ];
   this.isIOS = isIOS || false;
   if (this.isIOS) {
-    ConsoleMessage("initialize IOS tuner");
+    // ConsoleMessage("initialize IOS tuner");
     this.checkIOSPerms();
   } else {
     this.initGetUserMedia();
-    ConsoleMessage("initialize WebAudio tuner");
+    // ConsoleMessage("initialize WebAudio tuner");
   }
 };
 
@@ -92,89 +91,77 @@ Tuner.prototype.initGetUserMedia = function () {
   }
 };
 
-Tuner.prototype.startRecord = function () {
+Tuner.prototype.startRecord = async function () {
   const self = this;
   if (self.isIOS) {
-    ConsoleMessage("Microphone input starting...");
+    // ConsoleMessage("Microphone input starting...");
     window.audioinput.start();
-    ConsoleMessage("Microphone input started!");
+    // ConsoleMessage("Microphone input started!");
     let stream = window.audioinput.getStream();
-    ConsoleMessage(`stream: ${stream}`);
+    // ConsoleMessage(`stream: ${stream}`);
     this.audioContext = window.audioinput.getAudioContext();
     self.setup(stream);
   } else {
-    navigator.mediaDevices
+    const microphone = await navigator.mediaDevices
       .getUserMedia({ audio: true })
-      .then((stream) => self.setup(stream))
-      .then(() => ConsoleMessage("Microphone input started!"))
       .catch(function (error) {
         alert(error.name + ": " + error.message);
       });
+    self.setup(microphone);
   }
 };
 Tuner.prototype.getAudioContext = function () {
-  if ( this.audioContext ) return this.audioContext;
-  if (window.audioinput) return window.audioinput.getAudioContext()
-  let ctx =  window.AudioContext || window.webkitAudioContext
-  return new ctx()
-}
-
-Tuner.prototype.createWorkletNode = async function() {
-  try {
-    let audioContext = this.getAudioContext()
-    // await audioContext.resume()
-    await audioContext.audioWorklet.addModule( "tunerApp.worklet.js" )
-
-  } catch ( e ) {
-    return null;
-  }
-  return  new AudioWorkletNode(
-    audioContext,
-    'tunerApp.worklet'
-  )
-  .then( (e) => { console.log('create worklet', e)}) 
- 
+  if (this.audioContext) return this.audioContext;
+  if (window.audioinput) return window.audioinput.getAudioContext();
+  let ctx = window.AudioContext || window.webkitAudioContext;
+  return new ctx();
 };
-Tuner.prototype.setup = function (stream) {
+
+Tuner.prototype.setup = async function (stream) {
+  // ConsoleMessage("setup");
   const self = this;
-  ConsoleMessage("setup");
   self.audioContext = self.getAudioContext();
   if (!stream) stream = window.audioinput.getStream();
-  self.audioContext
-    .createMediaStreamSource( stream )
-    .connect( self.analyser )
-    .connect( self.workletNode )
+  let source = self.audioContext.createMediaStreamSource(stream);
+  source
+    .connect(self.analyser)
+    .connect(self.workletNode)
     .connect( self.audioContext.destination );
-  ConsoleMessage(self.analyser);
-
-
-  // self.workletNode.addEventListener("audioprocess", function (event) {
-  self.workletNode.port.onmessage = (e) => {
-    if (e.data.eventType === 'data') {
-      const audioData = e.data.audioBuffer;
-      // process pcm data
-      const frequency = self.pitchDetector.do( audioData );
-    ConsoleMessage("worklet data: ", audioData);
-    if (frequency && self.onNoteDetected) {
-      const note = self.getNote(frequency);
-      self.onNoteDetected({
-        name: self.noteStrings[note % 12],
-        value: note,
-        cents: self.getCents(frequency, note),
-        octave: parseInt(note / 12) - 1,
-        frequency: frequency,
-      });
-    }   
-    }
-    if (e.data.eventType === 'stop') {
-      // recording has stopped
-    }
-  }
+   // ConsoleMessage("Microphone input started!");
 };
+
+Tuner.prototype.getWorkletNode = async function() {
+   return await this.audioContext.audioWorklet.addModule( 'worklets/tuner.worklet.js' )
+    .then( async () => {
+      // ConsoleMessage("worklet loaded")
+      let tunerNode = await new AudioWorkletNode( this.audioContext, 'tuner-proc' )
+      tunerNode.port.onmessage = (e) => {
+         if ( e.data instanceof Float32Array) {
+           const audioData = e.data;
+           // process pcm data
+           const frequency = this.pitchDetector.do(audioData);
+           // ConsoleMessage("worklet data: ", audioData);
+           if (frequency && this.onNoteDetected) {
+             const note = this.getNote(frequency);
+             this.onNoteDetected({
+               name: this.noteStrings[note % 12],
+               value: note,
+               cents: this.getCents(frequency, note),
+               octave: parseInt(note / 12) - 1,
+               frequency: frequency,
+             });
+           }
+         }
+       
+      };
+      return tunerNode
+})
+}
+
 Tuner.prototype.init = async function () {
   this.audioContext = this.getAudioContext();
   this.analyser = this.audioContext.createAnalyser();
-  this.workletNode = this.createWorkletNode()
+  this.workletNode = await this.getWorkletNode();
 
   const self = this;
 
@@ -230,7 +217,7 @@ Tuner.prototype.getCents = function (frequency, note) {
  */
 Tuner.prototype.play = function (frequency) {
   this.audioContext = this.getAudioContext();
-  ConsoleMessage(`audioContext: ${this.audioContext}`);
+  // ConsoleMessage(`audioContext: ${this.audioContext}`);
   if (!this.oscillator) {
     this.oscillator = this.audioContext.createOscillator();
     this.oscillator.connect(this.audioContext.destination);
@@ -240,12 +227,12 @@ Tuner.prototype.play = function (frequency) {
 };
 
 Tuner.prototype.stop = function () {
-  if ( this.oscillator ) {
+  if (this.oscillator) {
     this.oscillator.stop();
     this.oscillator = null;
   }
 
-  ConsoleMessage("Stopped!");
+  // ConsoleMessage("Stopped!");
 };
 Tuner.prototype.checkIOSPerms = function () {
   try {
@@ -324,7 +311,7 @@ Notes.prototype.createNotes = function () {
 };
 
 Notes.prototype.active = function ($note) {
-  ConsoleMessage("active note:", $note);
+  // ConsoleMessage("active note:", $note);
   this.clearActive();
   $note.classList.add("active");
   this.$notesList.scrollLeft =
@@ -339,7 +326,7 @@ Notes.prototype.clearActive = function () {
 };
 
 Notes.prototype.update = function (note) {
-  ConsoleMessage("update note val", note.value);
+  // ConsoleMessage("update note val", note.value);
   if (note.value in this.$notesMap) {
     this.active(this.$notesMap[note.value]);
     this.$frequency.childNodes[0].textContent = parseFloat(
@@ -349,9 +336,11 @@ Notes.prototype.update = function (note) {
 };
 
 Notes.prototype.toggleAutoMode = function () {
-  if ( this.isAutoMode ) {
+  if (this.isAutoMode) {
     this.clearActive();
-  } else { this.tuner.stop() }
+  } else {
+    this.tuner.stop();
+  }
   this.isAutoMode = !this.isAutoMode;
 };
 
@@ -381,7 +370,7 @@ Meter.prototype.init = function () {
  * @param {number} deg
  */
 Meter.prototype.update = function (deg) {
-  ConsoleMessage(`deg: ${deg}`);
+  // ConsoleMessage(`deg: ${deg}`);
   this.$pointer.style.transform = "rotate(" + deg + "deg)";
 };
 
@@ -458,15 +447,15 @@ Application.prototype.stop = function () {
 Application.prototype.updateFrequencyBars = function () {
   if (this.tuner.isIOS && this.frequencyData) {
     let data = Object.values(this.frequencyData);
-    if ( data.some( ( v ) => v >  0 ) ) {
-      ConsoleMessage(`freq obj update (${data.some((v) => v > 0)}): ${data}`);
-      this.frequencyData = new Uint8Array( data );
+    if (data.some((v) => v > 0)) {
+      // ConsoleMessage(`freq obj update (${data.some((v) => v > 0)}): ${data}`);
+      this.frequencyData = new Uint8Array(data);
     }
   }
-  
+
   if (this.tuner.analyser) {
-    // ConsoleMessage(`freq update ${Obtraject.values(this.frequencyData)}`);
-    let data = new Uint8Array( Object.values( this.frequencyData ) );
+    // // ConsoleMessage(`freq update ${Obtraject.values(this.frequencyData)}`);
+    let data = new Uint8Array(Object.values(this.frequencyData));
     this.tuner.analyser.getByteFrequencyData(data);
 
     this.frequencyBars.update(data);
@@ -475,7 +464,7 @@ Application.prototype.updateFrequencyBars = function () {
 };
 
 Application.prototype.update = function (note) {
-  ConsoleMessage("app update", note.cents);
+  // ConsoleMessage("app update", note.cents);
   this.notes.update(note);
   this.meter.update((note.cents / 50) * 45);
 };
@@ -488,4 +477,3 @@ Application.prototype.toggleAutoMode = function () {
 Application.prototype.getQVAR = function (obj) {
   return JSON.stringify(window.audioinput, null, 2);
 };
-

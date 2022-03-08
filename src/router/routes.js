@@ -1,7 +1,7 @@
 const routes = [
   {
     path: "/auth",
-    component: () => import("src/pages/AuthPage.vue")
+    component: () => import("src/pages/AuthPage.vue"),
   },
   {
     path: "/",
@@ -10,16 +10,16 @@ const routes = [
     children: [
       {
         path: "",
-        component: () => import("pages/Tools")
+        component: () => import("pages/Tools"),
       },
       {
         name: "tuner",
         path: "/tools/tuner",
         component: () => import("components/tools/Tuner"),
         meta: {
-          src: "/dev/tuner",
-          name: "Tuner"
-        }
+          menu: 'TunerMenuLG',
+          name: "Tuner",
+        },
       },
       {
         name: "spider",
@@ -27,8 +27,8 @@ const routes = [
         component: () => import("components/tools/Spider"),
         meta: {
           src: "/dev/spider",
-          name: "Spider Drills"
-        }
+          name: "Spider Drills",
+        },
       },
       {
         name: "fretboard",
@@ -36,17 +36,17 @@ const routes = [
         component: () => import("components/tools/Fretboard"),
         meta: {
           src: "/dev/fretboard",
-          name: "Fretboard"
-        }
-      }
-    ]
+          name: "Fretboard",
+        },
+      },
+    ],
   },
   // Always leave this as last one,
   // but you can also remove it
   {
     path: "*",
-    component: () => import("pages/Error404.vue")
-  }
+    component: () => import("pages/Error404.vue"),
+  },
 ];
 
 export default routes;
