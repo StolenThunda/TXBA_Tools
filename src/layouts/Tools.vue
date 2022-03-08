@@ -4,7 +4,11 @@
     <q-header elevated reveal>
       <q-bar class="q-electron-drag">
         <q-btn
+<<<<<<< HEAD
         v-show="hasMenu"
+=======
+        v-show="$route.meta.menu"
+>>>>>>> 4efd5024fd8e3e0e42baea23ea02639df15ddde8
         color="accent"
         icon="menu"
         aria-label="menu"
