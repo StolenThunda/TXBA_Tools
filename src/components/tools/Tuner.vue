@@ -56,6 +56,8 @@ document.addEventListener(
   false
 );
 import { Application, DEBUG_INFO } from "../../middleware/tools/tuner.js";
+import TunerMenuLG from "./TunerMenuLG.vue";
+import TunerMenuSm from "./TunerMenuSm.vue";
 
 export default {
   name: "Tuner",
@@ -73,25 +75,6 @@ export default {
   components: { 
     TunerMenuLG: import('./TunerMenuLG.vue'), 
     TunerMenuSM: import('./TunerMenuSm.vue') },
-  // computed: {
-  //   is440() { return this.app?.a4 === 440 },
-  //   is432() { return this.app?.a4 === 432 },
-  //   getA4() {
-  //     return this.app?.a4 || "440";
-  //   },
-  //   appInfo() {
-  //     return DEBUG_INFO;
-  //   },
-  //   toggleTones: {
-  //     get() {
-  //       return !this.app?.notes.isAutoMode;
-  //     },
-  //     set(value) {
-  //       this.app?.notes.toggleAutoMode();
-  //       this.enableTones = !this.app.notes.isAutoMode || false;
-  //     },
-  //   },
-  // },
   mounted() {
     // console.log("mounted");
     this.app = new Application(this.$q.platform.is.ios);
