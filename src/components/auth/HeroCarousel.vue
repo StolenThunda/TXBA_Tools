@@ -55,8 +55,9 @@
           align="justify"
           narrow-indicator
         >
-          <q-tab name="login" label="Login" />
-          <q-tab name="register" label="Register" />
+          <q-tab name="login" label="Login" data-cy="login-tab"/>
+          <q-tab name="register" label="Register"
+          data-cy="register-tab" />
         </q-tabs>
 
         <q-separator />
@@ -73,6 +74,7 @@
       </q-card>
     </q-dialog>
     <q-btn
+      data-cy="enter-btn"
       rounded
       glossy
       push
