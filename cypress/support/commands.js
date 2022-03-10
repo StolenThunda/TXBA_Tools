@@ -1,0 +1,44 @@
+// ***********************************************
+// This example commands.js shows you how to
+// create various custom commands and overwrite
+// existing commands.
+//
+// For more comprehensive examples of custom
+// commands please read more here:
+// https://on.cypress.io/custom-commands
+// ***********************************************
+//
+//
+// -- This is a parent command --
+// Cypress.Commands.add('login', (email, password) => { ... })
+//
+//
+// -- This is a child command --
+// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
+//
+//
+// -- This is a dual command --
+// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
+//
+//
+// -- This will overwrite an existing command --
+// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+
+Cypress.Commands.add("getBySel", (selector, ...args) => {
+  return cy.get(`[data-cy=${selector}]`, ...args);
+});
+Cypress.Commands.add("getBySelLike", (selector, ...args) => {
+  return cy.get(`[data-cy*=${selector}]`, ...args);
+});
+
+Cypress.Commands.add("login", (user, pass) => {
+  cy.session([user, pass], () => {
+    cy.visit("/#/auth");
+    cy.getBySel("enter-btn").click();
+    cy.get("[type=submit]").click();
+    cy.get("[aria-label='Email']").type(user);
+    cy.get("[aria-label='Password']").type(pass);
+    cy.get("[type=submit]").should("contain", "login").click();
+    cy.get(".q-toolbar__title").should("contain", "TXBA TOOLS");
+  });
+});

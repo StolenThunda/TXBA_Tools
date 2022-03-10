@@ -1,21 +1,20 @@
 import aubio from "aubiojs";
 import { consoleMessage, getMicrophonePermission } from "./tunerLib.js";
 
-
-
 export var DEBUG_INFO = null;
+let audioinputInstalled = (window.audioinput !== undefined);
 const ConsoleMessage = (...message) => {
-  console.trace( message );
-  DEBUG_INFO += `<br /><br /> ${message}`;
+  // console.trace(message);
+  DEBUG_INFO += `\n ${message}`;
   consoleMessage(message);
 };
 
 const onAudioInput = (evt) => {
   // 'evt.data' is an integer array containing raw audio data
-  //
-  // // ConsoleMessage("Audio data received: " + evt.data.length + " samples");
+  
+  ConsoleMessage("Audio data received: " + evt.data.length + " samples");
   // ... do something with the evt.data array ...
-  // // ConsoleMessage(typeof evt)
+  ConsoleMessage( typeof evt );
 };
 
 const onAudioInputError = (error) => {
@@ -28,6 +27,7 @@ window.addEventListener("audioinput", onAudioInput, false);
 // Listen to audioinputerror events
 window.addEventListener("audioinputerror", onAudioInputError, false);
 
+//#region Tuner
 export const Tuner = function (a4, isIOS) {
   this.info = null;
   this.middleA = a4 || 440;
@@ -49,19 +49,19 @@ export const Tuner = function (a4, isIOS) {
   ];
   this.isIOS = isIOS || false;
   if (this.isIOS) {
-    // ConsoleMessage("initialize IOS tuner");
+    ConsoleMessage("initialize IOS tuner");
     this.checkIOSPerms();
   } else {
     this.initGetUserMedia();
-    // ConsoleMessage("initialize WebAudio tuner");
+    ConsoleMessage("initialize WebAudio tuner");
   }
 };
 
 Tuner.prototype.initGetUserMedia = function () {
-  window.AudioContext = window.AudioContext || window.webkitAudioContext;
-  if (!window.AudioContext) {
+  this.audioContext = window.AudioContext || window.webkitAudioContext;
+  if (!this.audioContext) {
     return alert("AudioContext not supported");
-  }
+  }  
 
   // Older browsers might not implement mediaDevices at all, so we set an empty object first
   if (navigator.mediaDevices === undefined) {
@@ -93,75 +93,95 @@ Tuner.prototype.initGetUserMedia = function () {
 
 Tuner.prototype.startRecord = async function () {
   const self = this;
-  if (self.isIOS) {
+  if (self.isIOS || audioinputInstalled) {
     // ConsoleMessage("Microphone input starting...");
     window.audioinput.start();
-    // ConsoleMessage("Microphone input started!");
+    this.audioContext = window.audioinput.getAudioContext();
     let stream = window.audioinput.getStream();
     // ConsoleMessage(`stream: ${stream}`);
-    this.audioContext = window.audioinput.getAudioContext();
-    self.setup(stream);
-  } else {
-    const microphone = await navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .catch(function (error) {
-        alert(error.name + ": " + error.message);
+    await self.setup( stream )
+    .then( () => {
+      ConsoleMessage("Microphone input started!");
+      } )
+      .catch( ( err ) => {
+        ConsoleMessage( `IsIOS / AI Installed Error: ${err}` );
       });
-    self.setup(microphone);
+  } else {
+    await navigator.mediaDevices
+      .getUserMedia( { audio: true } )
+      .then( ( stream ) => {
+        ConsoleMessage("Microphone: " + stream);
+        self.setup( stream );
+      } )
+      .catch((error) =>{
+        alert(`mediadevices error: ${error.name} = ${error.message}`);
+      } );
   }
-};
-Tuner.prototype.getAudioContext = function () {
-  if (this.audioContext) return this.audioContext;
-  if (window.audioinput) return window.audioinput.getAudioContext();
-  let ctx = window.AudioContext || window.webkitAudioContext;
-  return new ctx();
 };
 
 Tuner.prototype.setup = async function (stream) {
-  // ConsoleMessage("setup");
+  ConsoleMessage("setup", stream);
   const self = this;
   self.audioContext = self.getAudioContext();
-  if (!stream) stream = window.audioinput.getStream();
+  if (!stream && audioinputInstalled) stream = window.audioinput.getStream();
   let source = self.audioContext.createMediaStreamSource(stream);
   source
     .connect(self.analyser)
     .connect(self.workletNode)
-    .connect( self.audioContext.destination );
-   // ConsoleMessage("Microphone input started!");
+    .connect(self.audioContext.destination);
+  // ConsoleMessage("Microphone input started!");
 };
 
-Tuner.prototype.getWorkletNode = async function() {
-   return await this.audioContext.audioWorklet.addModule( 'worklets/tuner.worklet.js' )
-    .then( async () => {
-      // ConsoleMessage("worklet loaded")
-      let tunerNode = await new AudioWorkletNode( this.audioContext, 'tuner-proc' )
-      tunerNode.port.onmessage = (e) => {
-         if ( e.data instanceof Float32Array) {
-           const audioData = e.data;
-           // process pcm data
-           const frequency = this.pitchDetector.do(audioData);
-           // ConsoleMessage("worklet data: ", audioData);
-           if (frequency && this.onNoteDetected) {
-             const note = this.getNote(frequency);
-             this.onNoteDetected({
-               name: this.noteStrings[note % 12],
-               value: note,
-               cents: this.getCents(frequency, note),
-               octave: parseInt(note / 12) - 1,
-               frequency: frequency,
-             });
-           }
-         }
-       
-      };
-      return tunerNode
-})
-}
+Tuner.prototype.getWorkletNode = async function (ctx) {
+  if ( ctx.audioWorklet ) {
+    console.log( `ctx.audioWorklet: ${ctx.audioWorklet}` );
+    return ctx.audioWorklet
+      .addModule( "worklets/tuner.worklet.js" )
+      .then( async () => {
+        // ConsoleMessage("worklet loaded")
+        let tunerNode = await new AudioWorkletNode(
+          this.audioContext,
+          "tuner-proc"
+        );
+        tunerNode.port.onmessage = ( e ) => {
+          if ( e.data instanceof Float32Array ) {
+            const audioData = e.data;
+            // process pcm data
+            const frequency = this.pitchDetector.do( audioData );
+            ConsoleMessage( "worklet data: ", audioData );
+            if ( frequency && this.onNoteDetected ) {
+              const note = this.getNote( frequency );
+              this.onNoteDetected( {
+                name: this.noteStrings[note % 12],
+                value: note,
+                cents: this.getCents( frequency, note ),
+                octave: parseInt( note / 12 ) - 1,
+                frequency: frequency,
+              } );
+            }
+          }
+        };
+        return tunerNode;
+      } )
+      .catch( ( err ) => {
+        console.log( `worklet error: ${err}` );
+      } );
+  }
+};
+
+Tuner.prototype.getAudioContext = function () {
+  let ctx;
+  if (this.audioContext) ctx = this.audioContext;
+  if (window.audioinput) ctx = window.audioinput.getAudioContext();
+  // if ( navigator.mediaDevices instanceOf Object)
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  return ctx;
+};
 
 Tuner.prototype.init = async function () {
   this.audioContext = this.getAudioContext();
   this.analyser = this.audioContext.createAnalyser();
-  this.workletNode = await this.getWorkletNode();
+  this.workletNode = await this.getWorkletNode(this.audioContext);
 
   const self = this;
 
@@ -173,7 +193,8 @@ Tuner.prototype.init = async function () {
       self.audioContext.sampleRate
     );
     self.startRecord();
-  });
+  } );
+  console.dir(this);
 };
 
 /**
@@ -234,17 +255,12 @@ Tuner.prototype.stop = function () {
 
   // ConsoleMessage("Stopped!");
 };
+
 Tuner.prototype.checkIOSPerms = function () {
   try {
     if (window.audioinput && !window.audioinput.isCapturing()) {
       getMicrophonePermission(
-        self.setup,
-        function (deniedMsg) {
-          ConsoleMessage(deniedMsg);
-        },
-        function (errorMsg) {
-          ConsoleMessage(errorMsg);
-        }
+        ConsoleMessage,ConsoleMessage, ConsoleMessage 
       );
     } else {
       ConsoleMessage("Already capturing!");
@@ -253,6 +269,9 @@ Tuner.prototype.checkIOSPerms = function () {
     ConsoleMessage("startCapture exception: " + ex);
   }
 };
+//#endregion
+
+//#region Notes
 export const Notes = function (selector, tuner) {
   this.tuner = tuner;
   this.isAutoMode = true;
@@ -343,7 +362,9 @@ Notes.prototype.toggleAutoMode = function () {
   }
   this.isAutoMode = !this.isAutoMode;
 };
+//#endregion
 
+//#region Meter
 /**
  * @param {string} selector
  * @constructor
@@ -370,10 +391,12 @@ Meter.prototype.init = function () {
  * @param {number} deg
  */
 Meter.prototype.update = function (deg) {
-  // ConsoleMessage(`deg: ${deg}`);
+  ConsoleMessage(`deg: ${deg}`);
   this.$pointer.style.transform = "rotate(" + deg + "deg)";
 };
+//#endregion
 
+//#region Frequency Bars
 /**
  * the frequency histogram
  *
@@ -390,7 +413,8 @@ export const FrequencyBars = function (selector) {
 /**
  * @param {Uint8Array} data
  */
-FrequencyBars.prototype.update = function (data) {
+FrequencyBars.prototype.update = function ( data ) {
+  // ConsoleMessage(`data: ${data}`);
   const length = 64; // low frequency only
   const width = this.$canvas.width / length - 0.5;
   this.canvasContext.clearRect(0, 0, this.$canvas.width, this.$canvas.height);
@@ -405,7 +429,9 @@ FrequencyBars.prototype.update = function (data) {
     );
   }
 };
+//#endregion
 
+//#region Application
 export const Application = function (isIOS) {
   this.a4 = parseInt(localStorage.getItem("a4")) || 440;
   this.tuner = new Tuner(this.a4, isIOS);
@@ -454,7 +480,6 @@ Application.prototype.updateFrequencyBars = function () {
   }
 
   if (this.tuner.analyser) {
-    // // ConsoleMessage(`freq update ${Obtraject.values(this.frequencyData)}`);
     let data = new Uint8Array(Object.values(this.frequencyData));
     this.tuner.analyser.getByteFrequencyData(data);
 
@@ -477,3 +502,4 @@ Application.prototype.toggleAutoMode = function () {
 Application.prototype.getQVAR = function (obj) {
   return JSON.stringify(window.audioinput, null, 2);
 };
+//#endregion

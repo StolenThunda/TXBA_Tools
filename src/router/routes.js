@@ -17,9 +17,12 @@ const routes = [
         path: "/tools/tuner",
         component: () => import("components/tools/Tuner"),
         meta: {
-          menu: 'TunerMenuLG',
           name: "Tuner",
-        },
+          menu: {
+            name: 'Menu',
+            cmp: () => import('components/tools/TunerMenuSM'),
+          },
+          },
       },
       {
         name: "spider",

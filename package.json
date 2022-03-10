@@ -9,7 +9,7 @@
     "build": "npx quasar b --debug",
     "build:deploy": "yarn run build && yarn run propogate",
     "build:android": "npx quasar build -m capacitor -T android --debug --ide",
-    "build:cordova:ios": "npx quasar b -m cordova -T ios --debug  --ide",
+    "build:cordova:ios": "npx quasar b -m cordova -T ios --debug ",
     "build:ios": "npx quasar build -m capacitor -T ios --debug --ide",
     "build:electron": "npx quasar build -m electron --debug ",
     "build:electron:interactive": "npx epi",
@@ -20,12 +20,16 @@
     "dev:electron": "unset NODE_OPTIONS && npx quasar dev -m electron -- --no-sandbox --disable-setuid-sandbox",
     "dev:ios": "npx quasar dev -m capacitor -T ios --ide",
     "lint": "eslint --ext .js,.vue ./",
-    "propogate": "cp --update --recursive --verbose --force dist/spa/* ../txba-demo",
-    "start": "quasar d"
+    "propogate:windows": "cp --update --recursive --verbose --force dist/spa/* ../txba-demo",
+    "propogate:ios": "cp -av -f ./dist/spa/ ../txba-demo",
+    "start": "quasar d",
+    "test:e2e": "npx cypress open"
   },
   "dependencies": {
     "@capacitor/android": "^2.4.1",
     "@capacitor/core": "^2.4.1",
+    "@cypress/vue": "2",
+    "@cypress/webpack-dev-server": "^1.8.2",
     "@electron/remote": "^2.0.5",
     "@quasar/cli": "^1.2.2",
     "@quasar/extras": "^1.12.4",
@@ -43,6 +47,7 @@
     "firebase": "^8.2.6",
     "global": "^4.4.0",
     "howler": "^2.2.3",
+    "html-webpack-plugin": "4",
     "quasar": "^1.18.2",
     "webpack": "^5.20.2",
     "wine": "^0.9.13"
@@ -50,6 +55,7 @@
   "devDependencies": {
     "@quasar/app": "^2.2.1",
     "babel-eslint": "^10.0.1",
+    "cypress": "^9.5.1",
     "electron": "^13.0.0",
     "electron-debug": "^3.0.1",
     "electron-devtools-installer": "^3.0.0",

@@ -1,3 +1,5 @@
+import { on } from "@svgdotjs/svg.js";
+
 export const onAudioInput = (evt) => {
   // 'evt.data' is an integer array containing raw audio data
   //
@@ -21,10 +23,14 @@ export function consoleMessage(msg, debugVar) {
 }
 
 export function getMicrophonePermission ( onSuccess, onDenied, onError ) {
-    window.audioinput.checkMicrophonePermission( function ( hasPermission ) {
+    window.audioinput.checkMicrophonePermission( ( hasPermission ) => {
+        // console.log( `onsuccess: ${onSuccess}` );
+        // console.log( `onDenied: ${onDenied}` );
+        // console.log( `onError: ${onError}` );
         try {
             if ( hasPermission ) {
                 if ( onSuccess )
+                    console.log( "Microphone already has permission granted" );
                     onSuccess();
             } else {
                 window.audioinput.getMicrophonePermission( function (
@@ -34,19 +40,23 @@ export function getMicrophonePermission ( onSuccess, onDenied, onError ) {
                     try {
                         if ( hasPermission ) {
                             if ( onSuccess )
+                                console.log( "Microphone permission granted" );
                                 onSuccess();
                         } else {
                             if ( onDenied )
+                                console.log( "Microphone permission denied" );
                                 onDenied( "User denied permission to record: " + message );
                         }
                     } catch ( ex ) {
                         if ( onError )
+                            console.log( "Error getting microphone permission: " + ex );
                             onError( "Start after getting permission exception: " + ex );
                     }
                 } );
             }
         } catch ( ex ) {
             if ( onError )
+                console.log( "Error getting microphone permission: " + ex );
                 onError( "getMicrophonePermission exception: " + ex );
         }
     } );

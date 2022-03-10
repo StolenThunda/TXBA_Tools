@@ -9,7 +9,7 @@
       </q-item-section>
     </q-item> -->
   <TunerMenuLG class="gt-xs" :app="app" />
-  <TunerMenuSM class="lt-sm" :app="app" />
+  <!-- <TunerMenuSM class="lt-sm" :app="app" /> -->
     <canvas class="frequency-bars"></canvas>
     <div class="meter">
       <div class="meter-dot"></div>
@@ -25,7 +25,7 @@
           @click="q = !q"
           label="Errors"
           icon="error"
-          v-if="appInfo !== null"
+          v-if="info !== ''"
           stacked
           push
           glossy
@@ -38,7 +38,7 @@
               <div class="text-h5">Error:</div>
             </q-card-section>
             <q-card-section style="max-height: 60vh; max-width: 90vw">
-              <!-- <div v-html="appInfo" /> -->
+              <div v-html="info" />
               <!-- <div v-id="infoMessage">{{ getQ($q) }}</div> -->
             </q-card-section>
           </q-card>
@@ -56,8 +56,8 @@ document.addEventListener(
   false
 );
 import { Application, DEBUG_INFO } from "../../middleware/tools/tuner.js";
-import TunerMenuLG from "./TunerMenuLG.vue";
-import TunerMenuSm from "./TunerMenuSm.vue";
+// import TunerMenuLG from "./TunerMenuLG.vue";
+// import TunerMenuSm from "./TunerMenuSm.vue";
 
 export default {
   name: "Tuner",
@@ -73,57 +73,59 @@ export default {
     info: DEBUG_INFO,
   }),
   components: { 
-    TunerMenuLG: import('./TunerMenuLG.vue'), 
-    TunerMenuSM: import('./TunerMenuSm.vue') },
+    TunerMenuLG: () => import('./TunerMenuLG.vue'), 
+    // TunerMenuSM: () => import('./TunerMenuSm.vue') 
+    },
   mounted() {
     // console.log("mounted");
     this.app = new Application(this.$q.platform.is.ios);
     this.app.start();
+    this.$emit('app-loaded', this.app); // emit event to parent
   },
-  methods: { 
-    getQ(obj) {
-      return DEBUG_INFO;
-    },
-    setFreq(freq) {
-      this.app.a4 = freq;
-      this.app.tuner.middleA = freq;
-      this.app.notes.createNotes();
-      this.app.update({
-        name: "A",
-        frequency: this.app.a4,
-        octave: 4,
-        value: 69,
-        cents: 0,
-      });
-      localStorage.setItem("a4", freq);
-    },
-    getFreq() {
-      this.$q
-        .dialog({
-          title: "Frequency",
-          message: "What frequency would you like to tune to?",
-          prompt: {
-            model: this.app.a4 || 440,
-            type: "number", // optional
-          },
-          cancel: true,
-          standout: true,
-        })
-        .onOk((data) => {
-          console.log(">>>> OK, received", data);
-          this.setFreq(data);
-        })
-        .onCancel(() => {
-          // console.log('>>>> Cancel')
-        })
-        .onDismiss(() => {
-          // console.log('I am triggered on both OK and Cancel')
-        });
-    },
-  },
-  destroyed() {
-    this.app?.stop();
-  },
+  // methods: { 
+  //   getQ(obj) {
+  //     return DEBUG_INFO;
+  //   },
+  //   setFreq(freq) {
+  //     this.app.a4 = freq;
+  //     this.app.tuner.middleA = freq;
+  //     this.app.notes.createNotes();
+  //     this.app.update({
+  //       name: "A",
+  //       frequency: this.app.a4,
+  //       octave: 4,
+  //       value: 69,
+  //       cents: 0,
+  //     });
+  //     localStorage.setItem("a4", freq);
+  //   },
+  //   getFreq() {
+  //     this.$q
+  //       .dialog({
+  //         title: "Frequency",
+  //         message: "What frequency would you like to tune to?",
+  //         prompt: {
+  //           model: this.app.a4 || 440,
+  //           type: "number", // optional
+  //         },
+  //         cancel: true,
+  //         standout: true,
+  //       })
+  //       .onOk((data) => {
+  //         console.log(">>>> OK, received", data);
+  //         this.setFreq(data);
+  //       })
+  //       .onCancel(() => {
+  //         // console.log('>>>> Cancel')
+  //       })
+  //       .onDismiss(() => {
+  //         // console.log('I am triggered on both OK and Cancel')
+  //       });
+  //   },
+  // },
+  // destroyed() {
+  //   this.app?.stop();
+  // },
 };
 </script>
 
