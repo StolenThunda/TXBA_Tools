@@ -1,15 +1,15 @@
 <template>
-   <q-menu icon="settings" >
+   <!-- <q-menu icon="settings" > -->
       <!-- <template #label>
         <div class="text-weight-bold">
           <span>A<sub>4</sub></span>
           =
           <span>{{ getA4 }} </span>
           Hz
-        </div>
+        </div>class=" q-mt-xl q-pt-xl"
       </template> -->
-          <q-list dense  class=" q-mt-xl q-pt-xl">
-            <q-item>
+          <q-list dense  >
+            <q-item class="fit">
               <q-item-section>
                 <q-btn-dropdown split class="glossy" @click="getFreq">
                   <template v-slot:label>
@@ -18,7 +18,7 @@
                         <q-icon name="graphic_eq" color="accent" />
                       </q-item-section>
                       <q-item-label class="text-accent"
-                        >Change A<sub>4</sub> Frequency</q-item-label
+                        >Change A<sub>4</sub> <br />Frequency</q-item-label
                       >
                     </q-item>
                   </template>
@@ -69,13 +69,19 @@
               <!-- <q-item-section side></q-item-section> -->
             </q-item>
           </q-list>
-    </q-menu>
+    <!-- </q-m11enu> -->
 </template>
 <script>
 export default {
-  name: 'TunerMenuSm',
-  props: [app],
-  toggleTones: {
+  // name: 'TunerMenuS',
+  props: { 
+    app: { 
+      type: Object,
+      default: () => ({})
+    }
+  },
+  computed: {
+    toggleTones: {
       get() {
         return !this.app?.notes.isAutoMode;
       },
@@ -84,5 +90,59 @@ export default {
         this.enableTones = !this.app.notes.isAutoMode || false;
       },
     },
+    getA4() {
+      return this.app?.notes.a4;
+    },
+    is440() {
+      return this.app?.notes.a4 === 440;
+    },
+    is432() {
+      return this.app?.notes.a4 === 432;
+    },
+  },
+  methods: { 
+    getQ(obj) {
+      return DEBUG_INFO;
+    },
+    setFreq(freq) {
+      this.app.a4 = freq;
+      this.app.tuner.middleA = freq;
+      this.app.notes.createNotes();
+      this.app.update({
+        name: "A",
+        frequency: this.app.a4,
+        octave: 4,
+        value: 69,
+        cents: 0,
+      });
+      localStorage.setItem("a4", freq);
+    },
+    getFreq() {
+      this.$q
+        .dialog({
+          title: "Frequency",
+          message: "What frequency would you like to tune to?",
+          prompt: {
+            model: this.app.a4 || 440,
+            type: "number", // optional
+          },
+          cancel: true,
+          standout: true,
+        })
+        .onOk((data) => {
+          console.log(">>>> OK, received", data);
+          this.setFreq(data);
+        })
+        .onCancel(() => {
+          // console.log('>>>> Cancel')
+        })
+        .onDismiss(() => {
+          // console.log('I am triggered on both OK and Cancel')
+        });
+    },
+  },
+  // destroyed() {
+  //   this.app?.stop();
+  // },
 }
 </script>

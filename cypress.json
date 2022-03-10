@@ -1,0 +1,7 @@
+{
+  "projectId": "cjy6ng",
+  "experimentalStudio" : true,
+  "experimentalSessionSupport" : true,
+  "componentFolder": "src",
+  "baseUrl": "http://localhost:8088/#/"
+}

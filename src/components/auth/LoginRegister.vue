@@ -15,6 +15,7 @@ l<template>
           val =>
             isValidEmailAddress(val) || 'Please enter a valid email address'
         ]"
+        data-cy="email"
         ref="email"
         lazy-rules
         outlined
@@ -33,6 +34,7 @@ l<template>
     <div class="row q-mb-md">
       <q-input
         ref="password"
+        data-cy="password"
         class="col"
         outlined  
         stack-label
