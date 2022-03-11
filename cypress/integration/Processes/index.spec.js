@@ -14,16 +14,18 @@ describe.only("Index Page", () => {
 
   // context("check btn routes", () => {
     it.only("check routes", () => {
-      cy.getBySel("fretboard-tool").click();
+      cy.getBySel( "fretboard-tool" )
+        .click();
       cy.url().should("include", "/tools/fretboard");
       cy.getBySel("back-btn").click({ force: true });
 
       cy.getBySel("spider-tool").click();
       cy.url().should("include", "/tools/spider");
       cy.getBySel("back-btn").click({ force: true });
-
+      
       cy.getBySel("tuner-tool").click();
       cy.url().should("include", "/tools/tuner");
+      cy.getBySel("back-btn").click({ force: true });
     });
   // });
 });

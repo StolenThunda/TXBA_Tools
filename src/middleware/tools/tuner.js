@@ -122,7 +122,7 @@ Tuner.prototype.startRecord = async function () {
 Tuner.prototype.setup = async function (stream) {
   ConsoleMessage("setup", stream);
   const self = this;
-  self.audioContext = self.getAudioContext();
+  // self.audioContext = self.getAudioContext();
   if (!stream && audioinputInstalled) stream = window.audioinput.getStream();
   let source = self.audioContext.createMediaStreamSource(stream);
   source
@@ -132,50 +132,58 @@ Tuner.prototype.setup = async function (stream) {
   // ConsoleMessage("Microphone input started!");
 };
 
-Tuner.prototype.getWorkletNode = async function () {
-  return await this.audioContext.audioWorklet
-    .addModule("worklets/tuner.worklet.js")
-    .then(async () => {
-      // ConsoleMessage("worklet loaded")
-      let tunerNode = await new AudioWorkletNode(
-        this.audioContext,
-        "tuner-proc"
-      );
-      tunerNode.port.onmessage = (e) => {
-        if (e.data instanceof Float32Array) {
-          const audioData = e.data;
-          // process pcm data
-          const frequency = this.pitchDetector.do(audioData);
-          ConsoleMessage("worklet data: ", audioData);
-          if (frequency && this.onNoteDetected) {
-            const note = this.getNote(frequency);
-            this.onNoteDetected({
-              name: this.noteStrings[note % 12],
-              value: note,
-              cents: this.getCents(frequency, note),
-              octave: parseInt(note / 12) - 1,
-              frequency: frequency,
-            });
+Tuner.prototype.getWorkletNode = async function ( ctx ) {
+  if ( ctx.audioWorklet ) {
+    console.log( `ctx.audioWorklet: ${ctx.audioWorklet}` );
+    return ctx.audioWorklet
+      .addModule( "worklets/tuner.worklet.js" )
+      .then( async () => {
+        // ConsoleMessage("worklet loaded")
+        let tunerNode = await new AudioWorkletNode(
+          this.audioContext,
+          "tuner-proc"
+        );
+        tunerNode.port.onmessage = ( e ) => {
+          if ( e.data instanceof Float32Array ) {
+            const audioData = e.data;
+            // process pcm data
+            const frequency = this.pitchDetector.do( audioData );
+            ConsoleMessage( "worklet data: ", audioData );
+            if ( frequency && this.onNoteDetected ) {
+              const note = this.getNote( frequency );
+              this.onNoteDetected( {
+                name: this.noteStrings[note % 12],
+                value: note,
+                cents: this.getCents( frequency, note ),
+                octave: parseInt( note / 12 ) - 1,
+                frequency: frequency,
+              } );
+            }
           }
-        }
-      };
-      return tunerNode;
-    });
-};
+        };
+        return tunerNode;
+      } )
+      .catch( ( err ) => {
+        console.log( `worklet error: ${err}` );
+      } );
+  }
+}
+
+
 
 Tuner.prototype.getAudioContext = function () {
   let ctx;
   if (this.audioContext) ctx = this.audioContext;
   if (window.audioinput) ctx = window.audioinput.getAudioContext();
   // if ( navigator.mediaDevices instanceOf Object)
-  ctx = new ( window.AudioContext || window.webkitAudioContext )();
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
   return ctx;
 };
 
 Tuner.prototype.init = async function () {
   this.audioContext = this.getAudioContext();
   this.analyser = this.audioContext.createAnalyser();
-  this.workletNode = await this.getWorkletNode();
+  this.workletNode = await this.getWorkletNode(this.audioContext);
 
   const self = this;
 
@@ -187,7 +195,8 @@ Tuner.prototype.init = async function () {
       self.audioContext.sampleRate
     );
     self.startRecord();
-  });
+  } );
+  console.dir(this);
 };
 
 /**
@@ -384,7 +393,7 @@ Meter.prototype.init = function () {
  * @param {number} deg
  */
 Meter.prototype.update = function (deg) {
-  // ConsoleMessage(`deg: ${deg}`);
+  ConsoleMessage(`deg: ${deg}`);
   this.$pointer.style.transform = "rotate(" + deg + "deg)";
 };
 //#endregion
@@ -406,7 +415,8 @@ export const FrequencyBars = function (selector) {
 /**
  * @param {Uint8Array} data
  */
-FrequencyBars.prototype.update = function (data) {
+FrequencyBars.prototype.update = function ( data ) {
+  // ConsoleMessage(`data: ${data}`);
   const length = 64; // low frequency only
   const width = this.$canvas.width / length - 0.5;
   this.canvasContext.clearRect(0, 0, this.$canvas.width, this.$canvas.height);
