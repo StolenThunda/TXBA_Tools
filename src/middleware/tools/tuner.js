@@ -122,7 +122,7 @@ Tuner.prototype.startRecord = async function () {
 Tuner.prototype.setup = async function (stream) {
   ConsoleMessage("setup", stream);
   const self = this;
-  self.audioContext = self.getAudioContext();
+  // self.audioContext = self.getAudioContext();
   if (!stream && audioinputInstalled) stream = window.audioinput.getStream();
   let source = self.audioContext.createMediaStreamSource(stream);
   source
@@ -132,7 +132,7 @@ Tuner.prototype.setup = async function (stream) {
   // ConsoleMessage("Microphone input started!");
 };
 
-Tuner.prototype.getWorkletNode = async function (ctx) {
+Tuner.prototype.getWorkletNode = async function ( ctx ) {
   if ( ctx.audioWorklet ) {
     console.log( `ctx.audioWorklet: ${ctx.audioWorklet}` );
     return ctx.audioWorklet
@@ -167,7 +167,9 @@ Tuner.prototype.getWorkletNode = async function (ctx) {
         console.log( `worklet error: ${err}` );
       } );
   }
-};
+}
+
+
 
 Tuner.prototype.getAudioContext = function () {
   let ctx;
