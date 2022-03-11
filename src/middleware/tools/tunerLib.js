@@ -18,8 +18,11 @@ export function consoleMessage(msg, debugVar) {
         msg = `${msg}: ${debugVar}`;
         if ( typeof debugVar == 'object' ) console.dir( msg, debugVar );
         else console.log( msg );
-  } 
-  console.log(msg);
+    } 
+    let stack = new Error().stack
+    let splitStack = stack.split( "\n" )[3].trim();
+    // console.log(stack)
+  console.log(splitStack,msg);
 }
 
 export function getMicrophonePermission ( onSuccess, onDenied, onError ) {
