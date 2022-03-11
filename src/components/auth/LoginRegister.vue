@@ -21,10 +21,11 @@ l<template>
         outlined
         class="col"
         label="Email"
+        autocomplete="email"
         stack-label
       >
       <template v-slot:prepend>
-          <q-icon 
+        <q-icon 
             name="email"
           />
         </template>
@@ -35,8 +36,9 @@ l<template>
         ref="password"
         data-cy="password"
         class="col"
-        outlined
+        outlined  
         stack-label
+        autocomplete="current-password"
         v-model="formData.password"
         :type="passwordVisible ? 'text' : 'password'"
         label="Password"
