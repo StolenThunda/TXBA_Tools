@@ -123,7 +123,7 @@ Tuner.prototype.setup = async function (stream) {
   ConsoleMessage("setup", stream);
   const self = this;
   // self.audioContext = self.getAudioContext();
-  if (!stream && audioinputInstalled) stream = window.audioinput.getStream();
+  // if (!stream && audioinputInstalled) stream = window.audioinput.getStream();
   let source = self.audioContext.createMediaStreamSource(stream);
   source
     .connect(self.analyser)
@@ -262,7 +262,9 @@ Tuner.prototype.checkIOSPerms = function () {
   try {
     if (window.audioinput && !window.audioinput.isCapturing()) {
       getMicrophonePermission(
-        ConsoleMessage,ConsoleMessage, ConsoleMessage 
+        this.setup(window.audioinput.getStream()),
+        ConsoleMessage,
+        ConsoleMessage
       );
     } else {
       ConsoleMessage("Already capturing!");
